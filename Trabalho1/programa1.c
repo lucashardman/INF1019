@@ -16,4 +16,5 @@ int main (void){
 		scanf("%d", &j);
 		i = 0;
 	}
+	return 0;
 }
