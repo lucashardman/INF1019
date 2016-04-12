@@ -8,7 +8,7 @@ int main (void){
 
 	while (j == 0){
 		while(i < 10){
-			printf("Programa1 rodando.\n");
+			printf("Programa3 rodando.\n");
 			sleep(1);
 			i++;
 		}
