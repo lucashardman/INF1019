@@ -1,0 +1,1 @@
+#define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente

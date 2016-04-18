@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente
+#include "escalonadores.h"
 
 struct programaPrioridade{
 	char execStr[5];
@@ -33,8 +33,9 @@ int main (void){
 	struct programaRoundRobin *lstProgramasRoundRobin[maximo_programas]; //Lista de programas em execucao
 	struct programaLoteria *lstProgramasLoteria[maximo_programas]; //Lista de programas em execucao
 	
+	/* Escolha da politica de escalonamento */
 	while(loop == 0){
-		printf("Escolha a politica de escalonamento:\n1 - Por prioridade\n2 - Round-robin\n3 - Lottery\n");
+		printf("Escolha a politica de escalonamento:\n1 - Por prioridade\n2 - Round-robin\n3 - Loteria\n");
 
 		scanf("%d", &metodoEscalonamento);
 		
@@ -45,6 +46,8 @@ int main (void){
 			loop = 0;
 		}
 	}
+	/* Fim: Escolha da politica de escalonamento */
+
 	/****************************************************************************
 	 * Preparacao dos programas a serem executados 								*
 	 * 1 - Leitura do arquivo com a ordem de execucao dos programas				*
@@ -74,43 +77,43 @@ int main (void){
 
 	/* Estruturas recebem os dados do arquivo */
 	if(metodoEscalonamento == 1){ //Para a politica de escalonamento POR PRIORIDADE
-		//while(fscanf(exec, "%s %s %d", execStr, programa, &prioridade) == 3){ 
-		while(fscanf(exec, "%s %s %d", lstProgramasPrioridade[contadorProgramas].execStr, lstProgramasPrioridade[contadorProgramas].nome, lstProgramasPrioridade[contadorProgramas]->prioridade) == 3){ 
-			//strcpy(lstProgramasPrioridade[contadorProgramas]->nome, programa);
+		while(fscanf(exec, "%s %s %d", (lstProgramasPrioridade[contadorProgramas])->execStr, (lstProgramasPrioridade[contadorProgramas])->nome, &(lstProgramasPrioridade[contadorProgramas])->prioridade) == 3){ 
 			contadorProgramas++;
 		}
 	}
 	else if(metodoEscalonamento == 2){ //Para a politica de escalonamento ROUND-ROBIN
-		//while(fscanf(exec, "%s %s", execStr, programa) != EOF){
-		//	strcpy(lstProgramas[contadorProgramas], programa);
-		//	contadorProgramas++;
-		//}
+		while(fscanf(exec, "%s %s", (lstProgramasRoundRobin[contadorProgramas])->execStr, (lstProgramasRoundRobin[contadorProgramas])->nome) == 2){ 
+			contadorProgramas++;
+		}
 	}
 	else if(metodoEscalonamento == 3){ //Para a politica de escalonamento LOTTERY
-		//while(fscanf(exec, "%s %s %d", execStr, programa, &numeroTickets) != EOF){
-		//	strcpy(lstProgramas[contadorProgramas], programa);
-		//	contadorProgramas++;
-		//}
+		while(fscanf(exec, "%s %s %d", (lstProgramasLoteria[contadorProgramas])->execStr, (lstProgramasLoteria[contadorProgramas])->nome, &(lstProgramasLoteria[contadorProgramas])->numeroTickets) == 3){ 
+			contadorProgramas++;
+		}
 	}
 	/* Fim: estruturas recebem os dados do arquivo */
 
 	/****************************************************************************/
+	// BLOCO DE TESTE:      
+	//                                                    
 	//printf("Marcador 1\n");
-	printf("%d\n",contadorProgramas);
-	/* Teste politica 1:														*/
+	//printf("%d\n",contadorProgramas);
+	//
+	// Teste politica 1:														
 	//for(loop=0;loop<contadorProgramas;loop++)
-	//	printf("1: %s\n",lstProgramasPrioridade[loop]->nome);
-	/* Teste politica 2:														*/
-	//while(loop<contadorProgramas)
-	//	printf("%s\n",lstProgramas[loop]);
-	/* Teste politica 3:														*/
-	//while(loop<contadorProgramas)
-	//	printf("%s\n",lstProgramas[loop]);
+	//	printf("1: %s - prioridade: %d\n",lstProgramasPrioridade[loop]->nome, lstProgramasPrioridade[loop]->prioridade);
+	//
+	// Teste politica 2:														
+	//for(loop=0;loop<contadorProgramas;loop++)
+	//	printf("1: %s\n",lstProgramasRoundRobin[loop]->nome);
+	//
+	// Teste politica 3:														
+	//for(loop=0;loop<contadorProgramas;loop++)
+	//	printf("3: %s - numero de tickets: %d\n",lstProgramasLoteria[loop]->nome, lstProgramasLoteria[loop]->numeroTickets);
 	/****************************************************************************/
 
 
-	/* Fim da preparacao dos programas a serem executados  */
-
+	/* Chamada das funcoes de escalonamento */
 	if(metodoEscalonamento == 1){
 	}
 	else if(metodoEscalonamento == 2){
@@ -118,10 +121,22 @@ int main (void){
 	else if(metodoEscalonamento == 3){
 	}
 	else{
-		printf("Numero invalido.\n");
+		printf("Erro na chamada das funcoes de escalonamento: metodo invalido\n");
 	}
+	/* Fim: chamada das funcoes de escalonamento */
 
+	/* Limpeza de memora e encerramento de arquivos */
+	for(loop=0;loop<maximo_programas;loop++){
+
+		if(metodoEscalonamento == 1)
+			free(lstProgramasPrioridade[loop]);
+		if(metodoEscalonamento == 2)
+			free(lstProgramasRoundRobin[loop]);
+		if(metodoEscalonamento == 3)
+			free(lstProgramasLoteria[loop]);
+	}
 	fclose(exec); //Fecha o arquivo exec.exe
+	/* Fim: Limpeza de memora e encerramento de arquivos */
 
 	return 0;
 }
