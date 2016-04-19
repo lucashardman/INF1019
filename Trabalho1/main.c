@@ -61,6 +61,10 @@ int main (void){
 	/* Estruturas recebem os dados do arquivo */
 	if(metodoEscalonamento == 1){ //Para a politica de escalonamento POR PRIORIDADE
 		while(fscanf(exec, "%s %s %d", (lstProgramasPrioridade[contadorProgramas])->execStr, (lstProgramasPrioridade[contadorProgramas])->nome, &(lstProgramasPrioridade[contadorProgramas])->prioridade) == 3){ 
+			if((lstProgramasPrioridade[contadorProgramas])->prioridade < 1 || (lstProgramasPrioridade[contadorProgramas])->prioridade > 7){
+				printf("Arquivo corrompido. Atualize o arquivo e reinicie o programa.\nPrioridade Minima: 1\nPrioridade Maxima: 7\n");
+				exit(1);
+			}
 			contadorProgramas++;
 		}
 	}

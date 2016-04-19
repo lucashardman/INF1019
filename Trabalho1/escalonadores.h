@@ -26,5 +26,3 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]);
 
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]);
-
-void helloWorld();

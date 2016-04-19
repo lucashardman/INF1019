@@ -6,35 +6,39 @@
 
 #define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente
 
-/* Public Functions */
-//void escalonamentoPorPrioridade(int quantidadeProgramas, char *programas[maximo_programas], int prioridade);
-//void escalonamentoRoundRobin(int quantidadeProgramas, char *programas[maximo_programas]);
-//void escalonamentoLoteria(int quantidadeProgramas, char *programas[maximo_programas], int numeroTickets);
+/* Funcoes staticas */
 
-/* Static Functions */
+/* Funcoes de escalonamento */
 
 /****************************************************************************
- * Politica de escalonamento por prioridade							*
- * Parametros:
- * quantidadeProgramas - quantidade de programas sendo gerenciados
- * *programas - lista de programas sendo gerenciados
- * prioridade -											*
+ * Politica de escalonamento por prioridade									*
+ * Parametros:																*
+ * quantidadeProgramas - quantidade de programas sendo gerenciados			*
+ * *programas - lista de programas sendo gerenciados						*
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
 	printf("Hello");
 }
 
+/****************************************************************************
+ * Politica de escalonamento Round-Robin									*
+ * Parametros:																*
+ * quantidadeProgramas - quantidade de programas sendo gerenciados			*
+ * *programas - lista de programas sendo gerenciados						*
+ ****************************************************************************/
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]){
 
 	printf("Hey");
 }
 
+/****************************************************************************
+ * Politica de escalonamento por Loteria									*
+ * Parametros:																*
+ * quantidadeProgramas - quantidade de programas sendo gerenciados			*
+ * *programas - lista de programas sendo gerenciados						*
+ ****************************************************************************/
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]){
 
 	printf("Hi");
-}
-
-void helloWorld(){
-	printf("Hello World!!");
 }
