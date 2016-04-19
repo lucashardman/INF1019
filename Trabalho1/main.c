@@ -4,23 +4,6 @@
 
 #include "escalonadores.h"
 
-struct programaPrioridade{
-	char execStr[5];
-	char nome[15];
-	int prioridade;
-};
-
-struct programaRoundRobin{
-	char execStr[5];
-	char nome[15];
-};
-
-struct programaLoteria{
-	char execStr[5];
-	char nome[15];
-	int numeroTickets;
-};
-
 int main (void){
 
 	FILE *exec;
@@ -29,10 +12,10 @@ int main (void){
 	int loop = 0; //Variaveis auxiliares
 	int contadorProgramas = 0; //Guarda o numero de programas em execucao
 
-	struct programaPrioridade *lstProgramasPrioridade[maximo_programas]; //Lista de programas em execucao
-	struct programaRoundRobin *lstProgramasRoundRobin[maximo_programas]; //Lista de programas em execucao
-	struct programaLoteria *lstProgramasLoteria[maximo_programas]; //Lista de programas em execucao
-	
+	ProgramaPrioridade *lstProgramasPrioridade[maximo_programas]; //Lista de programas em execucao
+	ProgramaRoundRobin *lstProgramasRoundRobin[maximo_programas]; //Lista de programas em execucao
+	ProgramaLoteria *lstProgramasLoteria[maximo_programas]; //Lista de programas em execucao
+
 	/* Escolha da politica de escalonamento */
 	while(loop == 0){
 		printf("Escolha a politica de escalonamento:\n1 - Por prioridade\n2 - Round-robin\n3 - Loteria\n");
@@ -67,11 +50,11 @@ int main (void){
 	/* Alocacao de memoria */
 	for (loop=0; loop<maximo_programas; loop++){
 		if(metodoEscalonamento == 1)
-			lstProgramasPrioridade[loop] = (struct programaPrioridade*) malloc (sizeof(struct programaPrioridade) * 25);
+			lstProgramasPrioridade[loop] = (ProgramaPrioridade*) malloc (sizeof(ProgramaPrioridade) * 25);
 		if(metodoEscalonamento == 2)
-			lstProgramasRoundRobin[loop] = (struct programaRoundRobin*) malloc (sizeof(struct programaRoundRobin) * 25);
+			lstProgramasRoundRobin[loop] = (ProgramaRoundRobin*) malloc (sizeof(ProgramaRoundRobin) * 25);
 		if(metodoEscalonamento == 3)
-			lstProgramasLoteria[loop] = (struct programaLoteria*) malloc (sizeof(struct programaLoteria) * 25);
+			lstProgramasLoteria[loop] = (ProgramaLoteria*) malloc (sizeof(ProgramaLoteria) * 25);
 	}
 	/* Fim da alocacao de memoria */
 
@@ -112,13 +95,15 @@ int main (void){
 	//	printf("3: %s - numero de tickets: %d\n",lstProgramasLoteria[loop]->nome, lstProgramasLoteria[loop]->numeroTickets);
 	/****************************************************************************/
 
-
 	/* Chamada das funcoes de escalonamento */
 	if(metodoEscalonamento == 1){
+		escalonamentoPorPrioridade(contadorProgramas, lstProgramasPrioridade);
 	}
 	else if(metodoEscalonamento == 2){
+		escalonamentoRoundRobin(contadorProgramas, lstProgramasRoundRobin);
 	}
 	else if(metodoEscalonamento == 3){
+		escalonamentoLoteria(contadorProgramas, lstProgramasLoteria);
 	}
 	else{
 		printf("Erro na chamada das funcoes de escalonamento: metodo invalido\n");
