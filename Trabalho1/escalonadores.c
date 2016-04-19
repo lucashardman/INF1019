@@ -4,8 +4,6 @@
 
 #include "escalonadores.h"
 
-#define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente
-
 /* Funcoes staticas */
 
 /* Funcoes de escalonamento */
@@ -18,7 +16,7 @@
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
-	printf("Hello");
+	printf("Hello\n");
 }
 
 /****************************************************************************
@@ -29,7 +27,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
  ****************************************************************************/
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]){
 
-	printf("Hey");
+	printf("Hey\n");
 }
 
 /****************************************************************************
@@ -40,5 +38,5 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
  ****************************************************************************/
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]){
 
-	printf("Hi");
+	printf("Hi\n");
 }

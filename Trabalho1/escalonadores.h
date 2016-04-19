@@ -1,25 +1,25 @@
 #define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente
 
-struct programaPrioridade{
+/* Estruturas com os dados lidos no arquivo exec.txt */
+
+typedef struct programaPrioridade{
 	char execStr[5];
 	char nome[15];
 	int prioridade;
-};
+}ProgramaPrioridade;
 
-struct programaRoundRobin{
+typedef struct programaRoundRobin{
 	char execStr[5];
 	char nome[15];
-};
+}ProgramaRoundRobin;
 
-struct programaLoteria{
+typedef struct programaLoteria{
 	char execStr[5];
 	char nome[15];
 	int numeroTickets;
-};
+}ProgramaLoteria;
 
-typedef struct programaPrioridade ProgramaPrioridade;
-typedef struct programaRoundRobin ProgramaRoundRobin;
-typedef struct programaLoteria ProgramaLoteria;
+/* Funcoes responsaveis pelos algoritmos de escalonamento */
 
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]);
 
