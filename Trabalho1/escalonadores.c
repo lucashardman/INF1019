@@ -1,6 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "escalonadores.h"
 
@@ -27,7 +26,30 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
  ****************************************************************************/
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]){
 
-	printf("Hey\n");
+	int loop1 = 0, loop2; //Variaveis auxiliares para loop
+	int pid[maximo_programas], pid_auxiliar = 0; //Variaveis responsaveis por guardar os pid dos processos
+
+	/* Inicializar o campo "terminado" com false */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		programas[loop1]->terminado = false;
+	}
+	/*TESTAR ESTA PARTE DO CODIGO*/
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		
+		//printf("%s\n", programas[loop1]->nome);
+
+		pid_auxiliar = fork();
+
+		if(pid_auxiliar!=0){
+			pid[loop1] = pid_auxiliar;
+			kill(pid_auxiliar, SIGSTOP);
+		}
+		else{
+			sleep(1);
+			execve(programas[loop1]->nome,NULL,NULL);
+		}
+	}
+
 }
 
 /****************************************************************************

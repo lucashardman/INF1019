@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
 #define maximo_programas 15 //Maximo de programas que podem ser executados simultaneamente
 
 /* Estruturas com os dados lidos no arquivo exec.txt */
@@ -6,17 +11,20 @@ typedef struct programaPrioridade{
 	char execStr[5];
 	char nome[15];
 	int prioridade;
+	bool terminado;
 }ProgramaPrioridade;
 
 typedef struct programaRoundRobin{
 	char execStr[5];
 	char nome[15];
+	bool terminado;
 }ProgramaRoundRobin;
 
 typedef struct programaLoteria{
 	char execStr[5];
 	char nome[15];
 	int numeroTickets;
+	bool terminado;
 }ProgramaLoteria;
 
 /* Funcoes responsaveis pelos algoritmos de escalonamento */
