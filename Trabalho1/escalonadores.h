@@ -11,12 +11,14 @@ typedef struct programaPrioridade{
 	char execStr[5];
 	char nome[15];
 	int prioridade;
+	int tempoExecucao;
 	bool terminado;
 }ProgramaPrioridade;
 
 typedef struct programaRoundRobin{
 	char execStr[5];
 	char nome[15];
+	int tempoExecucao;
 	bool terminado;
 }ProgramaRoundRobin;
 
@@ -24,6 +26,7 @@ typedef struct programaLoteria{
 	char execStr[5];
 	char nome[15];
 	int numeroTickets;
+	int tempoExecucao;
 	bool terminado;
 }ProgramaLoteria;
 

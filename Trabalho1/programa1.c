@@ -4,17 +4,17 @@
 
 int main (void){
 
-	int i = 0, j = 0;
+	int tempo = 14;
 
-	while (j == 0){
-		while(i < 10){
-			printf("Programa1 rodando.\n");
-			sleep(1);
-			i++;
-		}
-		printf("Tecle qualquer numero diferente de 0 para continuar rodando: ");
-		scanf("%d", &j);
-		i = 0;
+	printf("Este programa dura %d segundos.\n", tempo+1);
+
+	while(tempo > 0){
+		printf("Programa1 rodando. Faltam %d segundos.\n", tempo);
+		sleep(1);
+		tempo--;
 	}
+	
+	printf("Programa1 finalizado.\n");
+
 	return 0;
 }
