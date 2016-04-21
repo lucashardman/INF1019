@@ -28,11 +28,11 @@ int main (void){
 	/* Fim: Escolha da politica de escalonamento */
 
 	/****************************************************************************
-	 * Preparacao dos programas a serem executados 								*
-	 * 1 - Leitura do arquivo com a ordem de execucao dos programas				*
-	 * 2 - Tratamento de erro para leitura do arquivo							*
-	 * 3 - Alocacao de memoria para a estrutura que ira guardar os dados lidos	*
-	 * 4 - Estrutura recebe os dados											*
+	 * Preparacao dos programas a serem executados                              *
+	 * 1 - Leitura do arquivo com a ordem de execucao dos programas             *
+	 * 2 - Tratamento de erro para leitura do arquivo                           *
+	 * 3 - Alocacao de memoria para a estrutura que ira guardar os dados lidos  *
+	 * 4 - Estrutura recebe os dados                                            *
 	 ****************************************************************************/
 
 	exec = fopen("exec.txt", "r");

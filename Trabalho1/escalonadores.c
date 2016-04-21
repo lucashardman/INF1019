@@ -18,10 +18,10 @@ static bool testaProgramasFinalizados(int quantidadeProgramas);
 /* Funcoes de escalonamento */
 
 /****************************************************************************
- * Politica de escalonamento por prioridade									*
- * Parametros:																*
- * quantidadeProgramas - quantidade de programas sendo gerenciados			*
- * *programas - lista de programas sendo gerenciados						*
+ * Politica de escalonamento por prioridade                                 *
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
+ * *programas - lista de programas sendo gerenciados                        *
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
@@ -29,10 +29,10 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 }
 
 /****************************************************************************
- * Politica de escalonamento Round-Robin									*
- * Parametros:																*
- * quantidadeProgramas - quantidade de programas sendo gerenciados			*
- * *programas - lista de programas sendo gerenciados						*
+ * Politica de escalonamento Round-Robin                                    *
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
+ * *programas - lista de programas sendo gerenciados                        *
  ****************************************************************************/
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]){
 
@@ -62,16 +62,16 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 		if(testaProgramasFinalizados(quantidadeProgramas) == true) // Testa se todos os programas ja foram finalizados
 			return; //Finaliza a funcao de Round-Robin
 
-		
+
 	}
 	/* Fim do algoritmo de Round-Robin*/
 }
 
 /****************************************************************************
- * Politica de escalonamento por Loteria									*
- * Parametros:																*
- * quantidadeProgramas - quantidade de programas sendo gerenciados			*
- * *programas - lista de programas sendo gerenciados						*
+ * Politica de escalonamento por Loteria                                    *
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
+ * *programas - lista de programas sendo gerenciados                        *
  ****************************************************************************/
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]){
 
@@ -81,11 +81,11 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 /****************************** Funcoes estaticas ***************************/
 
 /****************************************************************************
- * Nome: iniciarProgramas               									*
+ * Nome: iniciarProgramas                                                   *
  * Descricao: responsavel por iniciar os programas que serao escalonados    *
  * utilizando execve e enviar um sinal para eles entrarem em espera SIGSTOP *
- * Parametros:																*
- * quantidadeProgramas - quantidade de programas sendo gerenciados			*
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  * pid - vetor responsavel por retornar o pid dos programas                 *
  ****************************************************************************/
 static void iniciarProgramas(int quantidadeProgramas, int *pid){
@@ -124,11 +124,11 @@ static void iniciarProgramas(int quantidadeProgramas, int *pid){
 }
 
 /****************************************************************************
- * Nome: testaProgramasFinalizados         									*
+ * Nome: testaProgramasFinalizados                                          *
  * Descricao: responsavel por testar se todos os programas ja foram         *
  * finalizados.                                                             *
- * Parametros:																*
- * quantidadeProgramas - quantidade de programas sendo gerenciados			*
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  * Condicoes de retorno:                                                    *
  * true - todos os programas ja foram finalizados                           *
  * false - ainda faltam programas a serem finalizados                       *
