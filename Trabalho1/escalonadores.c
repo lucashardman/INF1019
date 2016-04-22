@@ -48,7 +48,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
  ****************************************************************************/
 void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *programas[maximo_programas]){
 
-	int loop1 = 0, loop2 = 0; //Variaveis auxiliares para loop
+	int loop1 = 0; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
@@ -87,7 +87,6 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 	/* Inicio do algoritmo de Round-Robin */
 	loop1 = 0;
-	loop2 = 0;
 	while(1){
 
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
@@ -128,7 +127,6 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 				printf("O programa %s terminou em %.2f segundos.\n", progRoundRobin[loop1]->nome, progRoundRobin[loop1]->tempoExecucao/1000);
 				fflush(stdout);
 				progRoundRobin[loop1]->terminado = true;
-				loop2 = 0;
 				loop1++;
 			}
 		}
