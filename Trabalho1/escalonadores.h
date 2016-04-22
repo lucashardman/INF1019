@@ -18,7 +18,7 @@ typedef struct programaPrioridade{
 typedef struct programaRoundRobin{
 	char execStr[5];
 	char nome[15];
-	int tempoExecucao;
+	float tempoExecucao; //milissegundo
 	bool terminado;
 }ProgramaRoundRobin;
 

@@ -50,10 +50,10 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 	int loop1 = 0, loop2 = 0; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
-	float timeSharing = 5; //Tempo reservado para a execucao de cada programa
+	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
 	int quantidadeRodando = quantidadeProgramas;
-	int contadorTempo = 0;
+	float contadorTempo = 0;
 
 	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
 	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
@@ -92,18 +92,16 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
 
-			printf("\nFim da execucao de todos programas pela politica de escalonamento Round-Robin\nTempo total de execucao dos progaras: %d\n", contadorTempo);
+			printf("\nFim da execucao de todos programas pela politica de escalonamento Round-Robin\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
 			return; //Finaliza a funcao de Round-Robin
 		}
-		/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
-		contadorTempo = contadorTempo + 1;
 		
 		if(progRoundRobin[loop1]->terminado == false){
 
 			kill(pid[loop1], SIGCONT); //Sinal para o programa entrar em estado de execucao
 			fflush(stdout);
 			
-			sleep(1);
+			usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
 
 			/************************************************************
 			 * - waitpidResult < -1: espera por qualquer processo filho *
@@ -116,25 +114,18 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 			 ************************************************************/
 			waitpidResult = waitpid(pid[loop1], &waitpidStatus, WNOHANG);
 
+			/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+			contadorTempo = contadorTempo + timeSharing/1000;
+
 			if(waitpidResult == 0){
 
-				loop2++;
-				if(loop2 == timeSharing){ //Tempo reservado para a execucao de cada programa
-
-					printf("\nCota de tempo esgotada. Quantidade de programas em execucao: %d\n", quantidadeRodando);
-					contadorTempo = contadorTempo - 1; //Esta mensagem nao deve ser contada como tempo de execucao dos programas
-					
-					kill(pid[loop1], SIGSTOP); //Sinal para o programa entrar em estado de espera
-
-					loop1++;
-					loop2 = 0;
-				}
+				progRoundRobin[loop1]->tempoExecucao = contadorTempo;
+				kill(pid[loop1], SIGSTOP); //Sinal para o programa entrar em estado de espera
+				loop1++;
 			}
 			else{ //Fim da execucao de um programa
-				contadorTempo = contadorTempo - 1; //Esta mensagem nao deve ser contada como tempo de execucao dos programas
 				progRoundRobin[loop1]->tempoExecucao = contadorTempo;
-
-				printf("O programa %s terminou em %d segundos.\n", progRoundRobin[loop1]->nome, progRoundRobin[loop1]->tempoExecucao);
+				printf("O programa %s terminou em %.2f segundos.\n", progRoundRobin[loop1]->nome, progRoundRobin[loop1]->tempoExecucao/1000);
 				fflush(stdout);
 				progRoundRobin[loop1]->terminado = true;
 				loop2 = 0;
@@ -307,8 +298,8 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
 
 /****************************************************************************
  * Nome: distribuicaoBilhetes                                               *
- * Descricao: responsavel pela distriguicao de bilhetes para os programas   *
- * que serao executados para o escalonamento por loteria                    *
+ * Descricao: responsavel pela geracao e distriguicao de bilhetes para os   *
+ * programas que serao executados pelo escalonamento por loteria            *
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  ****************************************************************************/
@@ -368,20 +359,20 @@ static void distribuicaoBilhetes(int quantidadeProgramas){
 	/* Distribui os bilhetes sorteados entre os programas */
 	loop1=0;
 	loop2 = 0;
-	for(loop3=0;loop3<quantidadeBilhetes;loop3++){
+	for(loop3=0;loop3<quantidadeBilhetes;loop3++){ //loop3 representa cada bilhete contido em vetorBilhetes
 			
-		if(loop2 == progLoteria[loop1]->quantidadeBilhetes){
+		if(loop2 == progLoteria[loop1]->quantidadeBilhetes){ //Se loop2 alcancou o ultimo espaco para os bilhetes de progLoteria[loop1]
 	
-			loop1++;
-			loop2 = 0;
+			loop1++;//Passa para o proximo programa
+			loop2 = 0; //Passa para o primeiro bilhete do programa q atual (q passou a ser depois de loop1++)
 			progLoteria[loop1]->bilhetes[loop2] = vetorBilhetes[loop3];
 			//TESTE printf("\n%d - %s recebe bilhete %d\n",vetorBilhetes[loop3],progLoteria[loop1]->nome, progLoteria[loop1]->bilhetes[loop2]);
-			loop2++;
+			loop2++; //Passa para o proximo bilhete
 		}
-		else{
+		else{ //Se loop2 ainda nao alcancou o ultimo espaco para os bilhetes de progLoteria[loop1]
 			progLoteria[loop1]->bilhetes[loop2] = vetorBilhetes[loop3];
 			//TESTE printf("\n%d - %s recebe bilhete %d\n",vetorBilhetes[loop3],progLoteria[loop1]->nome, progLoteria[loop1]->bilhetes[loop2]);
-			loop2++;	
+			loop2++; //Passa para o proximo bilhete
 		}
 	}
 	/* Fim: Distribui os bilhetes sorteados entre os programas */
