@@ -1,7 +1,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <time.h>
 
 #include "escalonadores.h"
 
@@ -26,7 +25,7 @@ static ProgramaLoteria *progLoteria[maximo_programas]; //Variavel responsavel pe
 static void iniciarProgramas(int quantidadeProgramas, int *pid);
 static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRodando);
 static bool contidoNoVetor(int valor, int *vetor, int tamanho);
-static int sorteioBilhetes();
+static int unsigned sorteioBilhetes();
 static void distribuicaoBilhetes(int quantidadeProgramas);
 
 /************************ Funcoes de escalonamento **************************/
@@ -317,7 +316,7 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
  ****************************************************************************/
 static void distribuicaoBilhetes(int quantidadeProgramas){
 
-	int loop1 = 0, loop2 = 0;
+	int loop1 = 0, loop2 = 0, loop4 = 0;;
 	bool loop3 = false;
 	int maximoBilhetes = 0;
 	int sorteado = 100;
@@ -340,35 +339,30 @@ static void distribuicaoBilhetes(int quantidadeProgramas){
 	}
 
 	//Sorteio dos bilhetes
-	
-		for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
-			for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
-
-				//loop3 = true;
-				//while(loop3 == true){
-
-					sorteado = sorteioBilhetes(); //Sorteia os bilhetes
-
-					if(contidoNoVetor(sorteado, progLoteria[loop1]->bilhetes, progLoteria[loop1]->quantidadeBilhetes) == false){
-						progLoteria[loop1]->bilhetes[loop2] = sorteado; //Sorteia os bilhetes	
-						loop3 = false;
-						//printf("OLAAAAAA\n");			
-					}
-					else{
-
-						printf("OLAAAAAA\n");
-						loop3 = true;
-					}
-				//}
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
+		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+			
+			loop3 = true;
+			while(loop3 == true){
+				sorteado = sorteioBilhetes(); //Sorteia os bilhetes
+				if(contidoNoVetor(sorteado, progLoteria[loop1]->bilhetes, progLoteria[loop1]->quantidadeBilhetes) == false){
+				
+					progLoteria[loop1]->bilhetes[loop2] = sorteado; //Sorteia os bilhetes	
+					loop3 = false;		
+				}
+				else{
+					loop3 = true;
+				}
 			}
 		}
+	}
 
+	/* Print para teste */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
 
 		printf("Bilhetes do %s: {", progLoteria[loop1]->nome);
 		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
 
-			progLoteria[loop1]->bilhetes[loop2] = sorteioBilhetes();
 			printf("%d", progLoteria[loop1]->bilhetes[loop2]);
 
 			if(loop2 != progLoteria[loop1]->quantidadeBilhetes-1)
@@ -385,17 +379,21 @@ static void distribuicaoBilhetes(int quantidadeProgramas){
  * Condicoes de retorno:                                                    *
  * bilhete - inteiro de 0 a 19 que reprenta um bilhete.                     *
  ****************************************************************************/
-static int sorteioBilhetes(){
+static unsigned int sorteioBilhetes(){
 
-	int bilhete;
+	long bilhete;
+	int limite = 20;
 
-	srand((unsigned)time(0));
+	unsigned long num_bins = (unsigned long) limite +1;
+	unsigned long num_rand = (unsigned long) RAND_MAX +1;
+	unsigned long bin_size = num_rand / num_bins;
+	unsigned long defect = num_rand % num_bins;
 
-	bilhete = rand()%20; //Gera um numero aleatorio de 0 a 19
+	do{
+		bilhete = random();
+	}while(num_rand - defect <=(unsigned long) bilhete);
 
-	//printf("Bilhete gerado: %d\n", bilhete);
-
-	return bilhete;
+	return (int) bilhete/bin_size;
 }
 
 /****************************************************************************
