@@ -25,7 +25,6 @@ static ProgramaLoteria *progLoteria[maximo_programas]; //Variavel responsavel pe
 static void iniciarProgramas(int quantidadeProgramas, int *pid);
 static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRodando);
 static bool contidoNoVetor(int valor, int *vetor, int tamanho);
-static int unsigned sorteioBilhetes();
 static void distribuicaoBilhetes(int quantidadeProgramas);
 
 /************************ Funcoes de escalonamento **************************/
@@ -172,7 +171,6 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		progLoteria[loop1] = programas[loop1];
 	}
-	sorteioBilhetes();
 	distribuicaoBilhetes(quantidadeProgramas);
 	/* Fim: Inicializacao de progLoteria e sorteio de bilhetes */
 
@@ -316,48 +314,80 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
  ****************************************************************************/
 static void distribuicaoBilhetes(int quantidadeProgramas){
 
-	int loop1 = 0, loop2 = 0, loop4 = 0;;
-	bool loop3 = false;
-	int maximoBilhetes = 0;
-	int sorteado = 100;
+	long bilhete;
+	int limite = 20;
+	int loop1 = 0, loop2 = 0, loop3 = 0;
+	int *vetorBilhetes;
+	bool contido=true;
+	int quantidadeBilhetes;
 
-	bool bilhetesDiferentes = false; //Variavel para controlar um loop responsavel por nao haver bilhetes repetidos distribuidos entre os programas
+	unsigned long num_bins = (unsigned long) limite +1;
+	unsigned long num_rand = (unsigned long) RAND_MAX +1;
+	unsigned long bin_size = num_rand / num_bins;
+	unsigned long defect = num_rand % num_bins;
 
+	/* Calcula quantidade total de bilhetes que devem ser gerados e reserva espaco para eles na memoria */
+	quantidadeBilhetes = 0;
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
-		maximoBilhetes = maximoBilhetes + progLoteria[loop1]->quantidadeBilhetes;
+		quantidadeBilhetes = quantidadeBilhetes + progLoteria[loop1]->quantidadeBilhetes;
 	}
-	if(maximoBilhetes>20){ //Se a quantidade de bilhetes lidos de exec.txt for superior a 20 o programa termina
-		printf("Erro no arquivo exec.txt. A quantidade maxima de bilhetes eh 20.\nQuantidade: %d\n", maximoBilhetes);
+	if(quantidadeBilhetes>20){ //Se a quantidade de bilhetes lidos de exec.txt for superior a 20 o programa termina
+		printf("Erro no arquivo exec.txt. A quantidade maxima de bilhetes eh 20.\nQuantidade: %d\n", quantidadeBilhetes);
 		exit(1);
 	}
+	vetorBilhetes = (int *) malloc (quantidadeBilhetes * sizeof(int));
+	if(vetorBilhetes == NULL){
+		printf("Erro na distribuicao de bilhetes. Memoria para vetorBilhetes insuficiente.\n");
+		exit(1);
+	}
+	/* Fim: Calcula quantidade total de bilhetes que devem ser gerados e reserva espaco para eles na memoria */
 
-    //Inicializando todos bilhetes com o numero 100, para nao ter confusao com numeros no intervalo [0,19]
-	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
-		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
-			progLoteria[loop1]->bilhetes[loop2] = 100;
+	/********************************************************************************
+	 * Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes   *
+	 * 1 - No algoritmo abaixo, um numero aleatorio eh gerado atraves do do-while.  *
+	 * 2 - Um if verifica se o numero gerado ja esta dentro do vetor.               *
+	 * 3 - Se o numero gerado ainda nao estiver no vetor, o vetor recebe o numero   *
+	 * e um contador de loop eh incrementado.                                       *
+	 * 4 - quando o loop chega ao numero de bilhetes que todos os programas possuem *
+	 * somados, o loop para.                                                        *
+	*********************************************************************************/
+	loop1 = 0;
+	while(loop1 != quantidadeBilhetes){
+
+		do{
+			bilhete = random();
+		}while(num_rand - defect <=(unsigned long) bilhete);
+
+		if(contidoNoVetor((int) bilhete/bin_size, vetorBilhetes, quantidadeBilhetes) == false){ 
+			vetorBilhetes[loop1]=(int) bilhete/bin_size;
+			loop1++;				
 		}
 	}
+	/* Fim: Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes */
 
-	//Sorteio dos bilhetes
-	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
-		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+	/* Distribui os bilhetes sorteados entre os programas */
+	loop1=0;
+	loop2 = 0;
+	for(loop3=0;loop3<quantidadeBilhetes;loop3++){
 			
-			loop3 = true;
-			while(loop3 == true){
-				sorteado = sorteioBilhetes(); //Sorteia os bilhetes
-				if(contidoNoVetor(sorteado, progLoteria[loop1]->bilhetes, progLoteria[loop1]->quantidadeBilhetes) == false){
-				
-					progLoteria[loop1]->bilhetes[loop2] = sorteado; //Sorteia os bilhetes	
-					loop3 = false;		
-				}
-				else{
-					loop3 = true;
-				}
-			}
+		if(loop2 == progLoteria[loop1]->quantidadeBilhetes){
+	
+			loop1++;
+			loop2 = 0;
+			progLoteria[loop1]->bilhetes[loop2] = vetorBilhetes[loop3];
+			//TESTE printf("\n%d - %s recebe bilhete %d\n",vetorBilhetes[loop3],progLoteria[loop1]->nome, progLoteria[loop1]->bilhetes[loop2]);
+			loop2++;
+		}
+		else{
+			progLoteria[loop1]->bilhetes[loop2] = vetorBilhetes[loop3];
+			//TESTE printf("\n%d - %s recebe bilhete %d\n",vetorBilhetes[loop3],progLoteria[loop1]->nome, progLoteria[loop1]->bilhetes[loop2]);
+			loop2++;	
 		}
 	}
+	/* Fim: Distribui os bilhetes sorteados entre os programas */
 
-	/* Print para teste */
+	/* Print dos bilhetes de cada programa */
+	printf("\n");
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
 
 		printf("Bilhetes do %s: {", progLoteria[loop1]->nome);
@@ -368,32 +398,9 @@ static void distribuicaoBilhetes(int quantidadeProgramas){
 			if(loop2 != progLoteria[loop1]->quantidadeBilhetes-1)
 				printf(", ");
 		}
-		printf("}\n");
+		printf("}\n\n");
 	}
-
-}
-
-/****************************************************************************
- * Nome: sorteioBilhete                                                     *
- * Descricao: responsavel pelo sorteio de bilhetes.                         * 
- * Condicoes de retorno:                                                    *
- * bilhete - inteiro de 0 a 19 que reprenta um bilhete.                     *
- ****************************************************************************/
-static unsigned int sorteioBilhetes(){
-
-	long bilhete;
-	int limite = 20;
-
-	unsigned long num_bins = (unsigned long) limite +1;
-	unsigned long num_rand = (unsigned long) RAND_MAX +1;
-	unsigned long bin_size = num_rand / num_bins;
-	unsigned long defect = num_rand % num_bins;
-
-	do{
-		bilhete = random();
-	}while(num_rand - defect <=(unsigned long) bilhete);
-
-	return (int) bilhete/bin_size;
+	/* Fim: print dos bilhetes de cada programa */
 }
 
 /****************************************************************************
