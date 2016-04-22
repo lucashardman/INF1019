@@ -25,7 +25,8 @@ typedef struct programaRoundRobin{
 typedef struct programaLoteria{
 	char execStr[5];
 	char nome[15];
-	int numeroTickets;
+	int quantidadeBilhetes;
+	int bilhetes[20];
 	int tempoExecucao;
 	bool terminado;
 }ProgramaLoteria;

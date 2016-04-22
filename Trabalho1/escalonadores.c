@@ -1,21 +1,35 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "escalonadores.h"
 
-/* Variaveis globais estaticas */
+/*************************** Variaveis globais estaticas **********************/
 static int metodoEscalonamento;
+/***************************************
+ * metodoEscalonamento:                *
+ * esta variavel serve para as funcoes *
+ * estaticas secundarias identificarem *
+ * qual eh a politica de escalonamento *
+ * que esta ocorrendo.                 *
+ * 1 - Por prioridade                  *
+ * 2 - Round-Robin                     *
+ * 3 - Por loteria                     *
+ ***************************************/
 
 static ProgramaPrioridade *progPrioridade[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por prioridade
 static ProgramaRoundRobin *progRoundRobin[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por round robin
 static ProgramaLoteria *progLoteria[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por loteria
 
-/* Funcoes estaticas */
+/****************************** Funcoes estaticas ***************************/
 static void iniciarProgramas(int quantidadeProgramas, int *pid);
 static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRodando);
+static bool contidoNoVetor(int valor, int *vetor, int tamanho);
+static int sorteioBilhetes();
+static void distribuicaoBilhetes(int quantidadeProgramas);
 
-/* Funcoes de escalonamento */
+/************************ Funcoes de escalonamento **************************/
 
 /****************************************************************************
  * Politica de escalonamento por prioridade                                 *
@@ -38,6 +52,7 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 	int loop1 = 0, loop2 = 0; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
+	float timeSharing = 5; //Tempo reservado para a execucao de cada programa
 
 	int quantidadeRodando = quantidadeProgramas;
 	int contadorTempo = 0;
@@ -45,30 +60,32 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
 	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
 
-	metodoEscalonamento = 2;
+	metodoEscalonamento = 2; //Round-Robin
 
-	/* Executa os programas e envia o sinal para entrarem em espera */
+	/* Inicializa progRoundRobin e executa os programas e envia o sinal para entrarem em espera */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		progRoundRobin[loop1] = programas[loop1];
 	}
 	iniciarProgramas(quantidadeProgramas, pid);
-	/* Fim: Executa os programas e envia o sinal para entrarem em espera */
+	/* Fim: Inicializa progRoundRobin e executa os programas e envia o sinal para entrarem em espera */
 
 	/* Inicializar o campo "terminado" com false */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		progRoundRobin[loop1]->terminado = false;
 	}
+	/* Fim: Inicializar o campo "terminado" com false */
 
 	/* Inicializar variavel de contagem de tempo de execucao */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		progRoundRobin[loop1]->tempoExecucao = 0;
 	}
+	/* Fim: Inicializar variavel de contagem de tempo de execucao */
 
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		printf("O programa: %s de pid %d foi iniciado.\n", progRoundRobin[loop1]->nome, pid[loop1]);
 	}
 
-	printf("\n\n");
+	printf("\n");
 
 	/* Inicio do algoritmo de Round-Robin */
 	loop1 = 0;
@@ -104,7 +121,7 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 			if(waitpidResult == 0){
 
 				loop2++;
-				if(loop2 == 5){ //5 segundos de tempo para execucao de cada programa
+				if(loop2 == timeSharing){ //Tempo reservado para a execucao de cada programa
 
 					printf("\nCota de tempo esgotada. Quantidade de programas em execucao: %d\n", quantidadeRodando);
 					contadorTempo = contadorTempo - 1; //Esta mensagem nao deve ser contada como tempo de execucao dos programas
@@ -149,7 +166,36 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
  ****************************************************************************/
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]){
 
-	printf("Hi\n");
+	int loop1 = 0; //Variaveis auxiliares para loop
+	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
+
+	/* Inicializacao de progLoteria e sorteio de bilhetes */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progLoteria[loop1] = programas[loop1];
+	}
+	sorteioBilhetes();
+	distribuicaoBilhetes(quantidadeProgramas);
+	/* Fim: Inicializacao de progLoteria e sorteio de bilhetes */
+
+	iniciarProgramas(quantidadeProgramas, pid); //Executa os programas e envia o sinal para entrarem em espera
+
+	/* Inicializar o campo "terminado" com false */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progLoteria[loop1]->terminado = false;
+	}
+	/* Fim: Inicializar o campo "terminado" com false */
+
+	/* Inicializar variavel de contagem de tempo de execucao */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progLoteria[loop1]->tempoExecucao = 0;
+	}
+	/* Fim: Inicializar variavel de contagem de tempo de execucao */
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		printf("O programa: %s de pid %d foi iniciado.\n", progLoteria[loop1]->nome, pid[loop1]);
+	}
+
+	printf("\n");
 }
 
 /****************************** Funcoes estaticas ***************************/
@@ -203,6 +249,8 @@ static void iniciarProgramas(int quantidadeProgramas, int *pid){
  * finalizados.                                                             *
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
+ * quantidadeRodando - retorna por ponteiro um inteiro que representa       *
+ * a quantidade programas ainda sendo executados.                           *
  * Condicoes de retorno:                                                    *
  * true - todos os programas ja foram finalizados                           *
  * false - ainda faltam programas a serem finalizados                       *
@@ -258,4 +306,115 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
 	*/
 
 	return false; //Retorna aviso de que ainda faltam programas a serem finalizados
+}
+
+/****************************************************************************
+ * Nome: distribuicaoBilhetes                                               *
+ * Descricao: responsavel pela distriguicao de bilhetes para os programas   *
+ * que serao executados para o escalonamento por loteria                    *
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo gerenciados          *
+ ****************************************************************************/
+static void distribuicaoBilhetes(int quantidadeProgramas){
+
+	int loop1 = 0, loop2 = 0;
+	bool loop3 = false;
+	int maximoBilhetes = 0;
+	int sorteado = 100;
+
+	bool bilhetesDiferentes = false; //Variavel para controlar um loop responsavel por nao haver bilhetes repetidos distribuidos entre os programas
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		maximoBilhetes = maximoBilhetes + progLoteria[loop1]->quantidadeBilhetes;
+	}
+	if(maximoBilhetes>20){ //Se a quantidade de bilhetes lidos de exec.txt for superior a 20 o programa termina
+		printf("Erro no arquivo exec.txt. A quantidade maxima de bilhetes eh 20.\nQuantidade: %d\n", maximoBilhetes);
+		exit(1);
+	}
+
+    //Inicializando todos bilhetes com o numero 100, para nao ter confusao com numeros no intervalo [0,19]
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
+		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+			progLoteria[loop1]->bilhetes[loop2] = 100;
+		}
+	}
+
+	//Sorteio dos bilhetes
+	
+		for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
+			for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+
+				//loop3 = true;
+				//while(loop3 == true){
+
+					sorteado = sorteioBilhetes(); //Sorteia os bilhetes
+
+					if(contidoNoVetor(sorteado, progLoteria[loop1]->bilhetes, progLoteria[loop1]->quantidadeBilhetes) == false){
+						progLoteria[loop1]->bilhetes[loop2] = sorteado; //Sorteia os bilhetes	
+						loop3 = false;
+						//printf("OLAAAAAA\n");			
+					}
+					else{
+
+						printf("OLAAAAAA\n");
+						loop3 = true;
+					}
+				//}
+			}
+		}
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
+
+		printf("Bilhetes do %s: {", progLoteria[loop1]->nome);
+		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+
+			progLoteria[loop1]->bilhetes[loop2] = sorteioBilhetes();
+			printf("%d", progLoteria[loop1]->bilhetes[loop2]);
+
+			if(loop2 != progLoteria[loop1]->quantidadeBilhetes-1)
+				printf(", ");
+		}
+		printf("}\n");
+	}
+
+}
+
+/****************************************************************************
+ * Nome: sorteioBilhete                                                     *
+ * Descricao: responsavel pelo sorteio de bilhetes.                         * 
+ * Condicoes de retorno:                                                    *
+ * bilhete - inteiro de 0 a 19 que reprenta um bilhete.                     *
+ ****************************************************************************/
+static int sorteioBilhetes(){
+
+	int bilhete;
+
+	srand((unsigned)time(0));
+
+	bilhete = rand()%20; //Gera um numero aleatorio de 0 a 19
+
+	//printf("Bilhete gerado: %d\n", bilhete);
+
+	return bilhete;
+}
+
+/****************************************************************************
+ * Nome: contidoNoVetor                                                     *
+ * Descricao: responsavel pelo sorteio de bilhetes.                         *
+ * Parametros:                                                              *
+ * valor - valor que se deseja consultar se esta contido                    *
+ * vetor - vetor que vai ser consultado se tem o valor                      *
+ * tamanho - tamanho do vetor                                               * 
+ * Condicoes de retorno:                                                    *
+ * true - esta contido                                                      *
+ * false - nao esta contido                                                 *
+ ****************************************************************************/
+static bool contidoNoVetor(int valor, int *vetor, int tamanho){
+
+	int loop;
+    for (loop=0; loop < tamanho; loop++) {
+        if (vetor[loop] == valor)
+            return true;
+    }
+    return false;
 }

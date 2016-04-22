@@ -70,7 +70,7 @@ int main (void){
 		}
 	}
 	else if(metodoEscalonamento == 3){ //Para a politica de escalonamento LOTTERY
-		while(fscanf(exec, "%s %s %d", (lstProgramasLoteria[contadorProgramas])->execStr, (lstProgramasLoteria[contadorProgramas])->nome, &(lstProgramasLoteria[contadorProgramas])->numeroTickets) == 3){ 
+		while(fscanf(exec, "%s %s %d", (lstProgramasLoteria[contadorProgramas])->execStr, (lstProgramasLoteria[contadorProgramas])->nome, &(lstProgramasLoteria[contadorProgramas])->quantidadeBilhetes) == 3){ 
 			contadorProgramas++;
 		}
 	}
