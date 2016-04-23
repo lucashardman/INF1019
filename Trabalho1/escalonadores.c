@@ -25,7 +25,7 @@ static ProgramaLoteria *progLoteria[maximo_programas]; //Variavel responsavel pe
 static void iniciarProgramas(int quantidadeProgramas, int *pid);
 static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRodando);
 static bool contidoNoVetor(int valor, int *vetor, int tamanho);
-static void distribuicaoBilhetes(int quantidadeProgramas);
+static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes);
 
 /************************ Funcoes de escalonamento **************************/
 
@@ -37,6 +37,7 @@ static void distribuicaoBilhetes(int quantidadeProgramas);
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
+	metodoEscalonamento = 1;
 	printf("Hello\n");
 }
 
@@ -153,15 +154,40 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
  ****************************************************************************/
 void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[maximo_programas]){
 
-	int loop1 = 0; //Variaveis auxiliares para loop
+	int loop1 = 0, loop2 = 0, loop3 = 0; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
+	int timeSharing = 5000000; //Tempo reservado para a execucao de cada programa em microssegundos
 
-	/* Inicializacao de progLoteria e sorteio de bilhetes */
+	float contadorTempo = 0;
+
+	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
+	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
+
+	int quantidadeBilhetes=0; //Guarda o numero de bilhetes total (soma da quantidade de bilhetes de cada programa)
+	int quantidadeRodando = quantidadeProgramas; // Guarda a quantidade de programas em execucao
+
+	metodoEscalonamento = 3;
+
+	/* Inicializacao de progLoteria */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		progLoteria[loop1] = programas[loop1];
 	}
-	distribuicaoBilhetes(quantidadeProgramas);
-	/* Fim: Inicializacao de progLoteria e sorteio de bilhetes */
+	/* Fim: Inicializacao de progLoteria */
+
+	/* Calcula quantidade total de bilhetes que devem ser gerados */
+	quantidadeBilhetes = 0;
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		quantidadeBilhetes = quantidadeBilhetes + progLoteria[loop1]->quantidadeBilhetes;
+	}
+	if(quantidadeBilhetes>20){ //Se a quantidade de bilhetes lidos de exec.txt for superior a 20 o programa termina
+		printf("Erro no arquivo exec.txt. A quantidade maxima de bilhetes eh 20.\nQuantidade: %d\n", quantidadeBilhetes);
+		exit(1);
+	}
+	/* Fim: Calcula quantidade total de bilhetes que devem ser gerados */
+
+	/* Sorteio de bilhetes */
+	distribuicaoBilhetes(quantidadeProgramas, quantidadeBilhetes);
+	/* Fim: Sorteio de bilhetes */
 
 	iniciarProgramas(quantidadeProgramas, pid); //Executa os programas e envia o sinal para entrarem em espera
 
@@ -180,8 +206,68 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		printf("O programa: %s de pid %d foi iniciado.\n", progLoteria[loop1]->nome, pid[loop1]);
 	}
-
 	printf("\n");
+
+	/* Inicio do algoritmo de escalonamento por loteria */
+
+	loop1 = 1; //Bilhetes vao de 1 a 20, e nao de 0 a 19
+	for(loop1=1;loop1<quantidadeBilhetes+1;loop1++){ //loop1 = cada bilhete
+	
+		printf("\n********** Bilhete %d **********\n", loop1);
+
+		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
+
+			printf("\nFim da execucao de todos programas pela politica de escalonamento Round-Robin\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+			return; //Finaliza a funcao de Round-Robin
+		}
+
+		for(loop2=0;loop2<quantidadeProgramas;loop2++){ //Verificar para cada bilhete se ele esta contido no programa
+			for(loop3=0;loop3<progLoteria[loop2]->quantidadeBilhetes;loop3++){ //Comparar o bilhete da vez com cada bilhete do programa atual
+
+				if(loop1 == progLoteria[loop2]->bilhetes[loop3]){
+
+					kill(pid[loop2], SIGCONT); //Sinal para o programa entrar em estado de execucao
+					fflush(stdout);
+					
+					usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
+
+					/************************************************************
+					 * - waitpidResult < -1: espera por qualquer processo filho *
+					 * que seu grupo ID eh igual ao valor absoluto de pid.      *
+					 * - waitpidResult = -1: espera por qualquer processo filho.*
+					 * - waitpidResult = 0: espera por qualquer processo filho  *
+					 * que o seu grupo ID seja igual ao do processo que chama.  *
+					 * - waitpid < 0: espera pelo processo filho que o grupo ID *
+					 * eh igual ao valor do pid.                                *
+					 ************************************************************/
+					waitpidResult = waitpid(pid[loop2], &waitpidStatus, WNOHANG);
+
+					/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+					contadorTempo = contadorTempo + timeSharing/1000;
+
+					if(waitpidResult == 0){
+
+						progLoteria[loop2]->tempoExecucao = contadorTempo;
+						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
+					}
+					else{ //Fim da execucao de um programa
+						if(progLoteria[loop2]->terminado != true){
+							progLoteria[loop2]->tempoExecucao = contadorTempo;
+							printf("O programa %s terminou em %.2f segundos.\n", progLoteria[loop2]->nome, progLoteria[loop2]->tempoExecucao/1000);
+							fflush(stdout);
+							progLoteria[loop2]->terminado = true;
+						}
+						else{
+							printf("O programa %s ja finalizou e nao precisou do bilhete.\n", progLoteria[loop2]->nome);
+						}
+					}
+				}
+			}
+			fflush(stdout);
+		}
+
+	}
+	/* Fim do algoritmo de escalonamento por loteria */
 }
 
 /****************************** Funcoes estaticas ***************************/
@@ -254,8 +340,6 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
 	// 	printf("%s\n", progRoundRobin[loop]->nome);
 	/**********************************************************************/
 
-	//progRoundRobin[0]->terminado = true;
-
 	*quantidadeRodando = quantidadeProgramas;
 
 	for(loop=0;loop<quantidadeProgramas;loop++){
@@ -301,35 +385,26 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  ****************************************************************************/
-static void distribuicaoBilhetes(int quantidadeProgramas){
+static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes){
 
 	long bilhete;
 	int limite = 20;
 	int loop1 = 0, loop2 = 0, loop3 = 0;
 	int *vetorBilhetes;
 	bool contido=true;
-	int quantidadeBilhetes;
 
 	unsigned long num_bins = (unsigned long) limite +1;
 	unsigned long num_rand = (unsigned long) RAND_MAX +1;
 	unsigned long bin_size = num_rand / num_bins;
 	unsigned long defect = num_rand % num_bins;
 
-	/* Calcula quantidade total de bilhetes que devem ser gerados e reserva espaco para eles na memoria */
-	quantidadeBilhetes = 0;
-	for(loop1=0;loop1<quantidadeProgramas;loop1++){
-		quantidadeBilhetes = quantidadeBilhetes + progLoteria[loop1]->quantidadeBilhetes;
-	}
-	if(quantidadeBilhetes>20){ //Se a quantidade de bilhetes lidos de exec.txt for superior a 20 o programa termina
-		printf("Erro no arquivo exec.txt. A quantidade maxima de bilhetes eh 20.\nQuantidade: %d\n", quantidadeBilhetes);
-		exit(1);
-	}
+	/* Alocacao de memoria  para vetorBilhetes */
 	vetorBilhetes = (int *) malloc (quantidadeBilhetes * sizeof(int));
 	if(vetorBilhetes == NULL){
 		printf("Erro na distribuicao de bilhetes. Memoria para vetorBilhetes insuficiente.\n");
 		exit(1);
 	}
-	/* Fim: Calcula quantidade total de bilhetes que devem ser gerados e reserva espaco para eles na memoria */
+	/* Fim: Alocacao de memoria  para vetorBilhetes */
 
 	/********************************************************************************
 	 * Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes   *
