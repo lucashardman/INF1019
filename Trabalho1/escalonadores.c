@@ -510,11 +510,7 @@ static int sorteioBilhete(int limite){
 	/********************************************************************************
 	 * Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes   *
 	 * 1 - No algoritmo abaixo, um numero aleatorio eh gerado atraves do do-while.  *
-	 * 2 - Um if verifica se o numero gerado ja esta dentro do vetor.               *
-	 * 3 - Se o numero gerado ainda nao estiver no vetor, o vetor recebe o numero   *
-	 * e um contador de loop eh incrementado.                                       *
-	 * 4 - quando o loop chega ao numero de bilhetes que todos os programas possuem *
-	 * somados, o loop para.                                                        *
+  	 * 2 - O numero gera eh o retorno da funcao                                     *
 	*********************************************************************************/
 
 	while (sorteado == 0){
