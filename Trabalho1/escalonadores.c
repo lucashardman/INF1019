@@ -26,6 +26,7 @@ static void iniciarProgramas(int quantidadeProgramas, int *pid);
 static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRodando);
 static bool contidoNoVetor(int valor, int *vetor, int tamanho);
 static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes);
+static int sorteioBilhete(int limite);
 
 /************************ Funcoes de escalonamento **************************/
 
@@ -166,7 +167,7 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	int quantidadeBilhetes=0; //Guarda o numero de bilhetes total (soma da quantidade de bilhetes de cada programa)
 	int quantidadeRodando = quantidadeProgramas; // Guarda a quantidade de programas em execucao
 
-	metodoEscalonamento = 3;
+	metodoEscalonamento = 3; //Por Loteria
 
 	/* Inicializacao de progLoteria */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
@@ -211,13 +212,15 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	/* Inicio do algoritmo de escalonamento por loteria */
 
 	loop1 = 1; //Bilhetes vao de 1 a 20, e nao de 0 a 19
-	for(loop1=1;loop1<quantidadeBilhetes+1;loop1++){ //loop1 = cada bilhete
-	
+	while(1){
+
+		loop1 = sorteioBilhete(quantidadeBilhetes); //Bilhetes vao de 1 a 20, e nao de 0 a 19
+
 		printf("\n********** Bilhete %d **********\n", loop1);
 
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
 
-			printf("\nFim da execucao de todos programas pela politica de escalonamento Round-Robin\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+			printf("\nFim da execucao de todos programas pela politica de escalonamento por Loteria\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
 			return; //Finaliza a funcao de Round-Robin
 		}
 
@@ -486,4 +489,41 @@ static bool contidoNoVetor(int valor, int *vetor, int tamanho){
             return true;
     }
     return false;
+}
+
+/****************************************************************************
+ * Nome: sorteioBilhetes                                                    *
+ * Descricao: gera um numero aleatorio de 1 ate limite.                     *
+ * Parametros:                                                              *
+ * limite - o maior valor que pode ser gerado                               *
+ ****************************************************************************/
+static int sorteioBilhete(int limite){
+
+	long bilhete;
+	int sorteado = 0;
+
+	unsigned long num_bins = (unsigned long) limite +1;
+	unsigned long num_rand = (unsigned long) RAND_MAX +1;
+	unsigned long bin_size = num_rand / num_bins;
+	unsigned long defect = num_rand % num_bins;
+
+	/********************************************************************************
+	 * Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes   *
+	 * 1 - No algoritmo abaixo, um numero aleatorio eh gerado atraves do do-while.  *
+	 * 2 - Um if verifica se o numero gerado ja esta dentro do vetor.               *
+	 * 3 - Se o numero gerado ainda nao estiver no vetor, o vetor recebe o numero   *
+	 * e um contador de loop eh incrementado.                                       *
+	 * 4 - quando o loop chega ao numero de bilhetes que todos os programas possuem *
+	 * somados, o loop para.                                                        *
+	*********************************************************************************/
+
+	while (sorteado == 0){
+		do{
+			bilhete = random();
+		}while(num_rand - defect <=(unsigned long) bilhete);
+
+		sorteado = (int) bilhete/bin_size;
+		/* Fim: Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes */
+	}
+	return sorteado;
 }
