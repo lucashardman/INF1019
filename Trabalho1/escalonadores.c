@@ -17,9 +17,9 @@ static int metodoEscalonamento;
  * 3 - Por loteria                     *
  ***************************************/
 
-static ProgramaPrioridade *progPrioridade[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por prioridade
-static ProgramaRoundRobin *progRoundRobin[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por round robin
-static ProgramaLoteria *progLoteria[maximo_programas]; //Variavel responsavel pelo controle dos programas pela politica por loteria
+static ProgramaPrioridade *progPrioridade[maximo_programas]; //Estrutura responsavel pelo controle dos programas pela politica por prioridade
+static ProgramaRoundRobin *progRoundRobin[maximo_programas]; //Estrutura responsavel pelo controle dos programas pela politica por round robin
+static ProgramaLoteria *progLoteria[maximo_programas]; //Estrutura responsavel pelo controle dos programas pela politica por loteria
 
 /****************************** Funcoes estaticas ***************************/
 static void iniciarProgramas(int quantidadeProgramas, int *pid);
@@ -27,23 +27,67 @@ static bool testaProgramasFinalizados(int quantidadeProgramas, int *quantidadeRo
 static bool contidoNoVetor(int valor, int *vetor, int tamanho);
 static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes);
 static int sorteioBilhete(int limite);
+static char *menorPrioridade(int quantidadeProgramas);
 
 /************************ Funcoes de escalonamento **************************/
 
 /****************************************************************************
  * Politica de escalonamento por prioridade                                 *
+ * Descricao: nesta politica de escalonamento, cada programa tem uma        *
+ * prioridade. Quanto menor o valor da prioridade, maior eh a prioridade,   *
+ * ou seja, prioridade 1 >> prioridade 7.                                   *
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  * *programas - lista de programas sendo gerenciados                        *
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
-	metodoEscalonamento = 1;
-	printf("Hello\n");
+	int loop1 = 0; //Variaveis auxiliares para loop
+	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
+
+	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
+	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
+
+	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
+	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
+
+	metodoEscalonamento = 1; //Por Prioridade
+
+	/* Inicializa progPrioridade e executa os programas e envia o sinal para entrarem em espera */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progPrioridade[loop1] = programas[loop1];
+	}
+	iniciarProgramas(quantidadeProgramas, pid);
+	/* Fim: Inicializa progPrioridade e executa os programas e envia o sinal para entrarem em espera */
+
+	/* Inicializar o campo "terminado" com false */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progPrioridade[loop1]->terminado = false;
+	}
+	/* Fim: Inicializar o campo "terminado" com false */
+
+	/* Inicializar variavel de contagem de tempo de execucao */
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		progPrioridade[loop1]->tempoExecucao = 0;
+	}
+	/* Fim: Inicializar variavel de contagem de tempo de execucao */
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		printf("O programa: %s de pid %d foi iniciado.\n", progPrioridade[loop1]->nome, pid[loop1]);
+	}
+
+	printf("\n");
+
+	/* Inicio do algoritmo de Prioriodade */
+	printf("Menor prioridade: %s\n",menorPrioridade(quantidadeProgramas));
+	/* Fim do algoritmo de Prioriodade */
 }
 
 /****************************************************************************
  * Politica de escalonamento Round-Robin                                    *
+ * Descricao: cada programa possui a mesma fatia de tempo pra executar. De  *
+ * acordo com a ordem de chamada de cada programa eles executam durante o   *
+ * seu tempo de forma circular.                                             *
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  * *programas - lista de programas sendo gerenciados                        *
@@ -54,8 +98,8 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
-	int quantidadeRodando = quantidadeProgramas;
-	float contadorTempo = 0;
+	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
+	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
 
 	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
 	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
@@ -80,6 +124,8 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 		progRoundRobin[loop1]->tempoExecucao = 0;
 	}
 	/* Fim: Inicializar variavel de contagem de tempo de execucao */
+
+	printf("Fatia de tempo: %.2f segundos\n\n", (float) timeSharing/1000000);
 
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		printf("O programa: %s de pid %d foi iniciado.\n", progRoundRobin[loop1]->nome, pid[loop1]);
@@ -149,6 +195,10 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 /****************************************************************************
  * Politica de escalonamento por Loteria                                    *
+ * Descricao: os programas possuem a mesma fatia de tempo para executar.    *
+ * Os programas possuem uma lista de bilhetes de 1 a 20, que sao sorteados  *
+ * a cada loop. O programa que possui o bilhete sorteado sera o proximo a   *
+ * ser executado.                                                           *
  * Parametros:                                                              *
  * quantidadeProgramas - quantidade de programas sendo gerenciados          *
  * *programas - lista de programas sendo gerenciados                        *
@@ -157,7 +207,7 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 
 	int loop1 = 0, loop2 = 0, loop3 = 0; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
-	int timeSharing = 5000000; //Tempo reservado para a execucao de cada programa em microssegundos
+	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
 	float contadorTempo = 0;
 
@@ -203,6 +253,8 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 		progLoteria[loop1]->tempoExecucao = 0;
 	}
 	/* Fim: Inicializar variavel de contagem de tempo de execucao */
+
+	printf("Fatia de tempo: %.2f segundos\n\n", (float) timeSharing/1000000);
 
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
 		printf("O programa: %s de pid %d foi iniciado.\n", progLoteria[loop1]->nome, pid[loop1]);
@@ -522,4 +574,62 @@ static int sorteioBilhete(int limite){
 		/* Fim: Gera vetor de numeros aleatorios e diferentes entre 0 e quantidadeBilhetes */
 	}
 	return sorteado;
+}
+
+/****************************************************************************
+ * Nome: menorPrioridade                                                    *
+ * Descricao: serve para informar o programa rodando com menor prioridade   *
+ * Parametros:                                                              *
+ * limite - o maior valor que pode ser gerado                               *
+ * Retorno:                                                                 *
+ * nomeMenor - retorna uma string que eh o nome do programa com menor       *
+ * prioridade.                                                              *
+ ****************************************************************************/
+static char *menorPrioridade(int quantidadeProgramas){
+
+	int loop = 0, loop2 = 0;
+	int menor = 0;
+
+	int quantidadeRodando;
+	int *rodando;
+
+	char *nomeMenor;
+
+    ProgramaPrioridade *progRodando[maximo_programas]; //Estrutura responsavel pelo controle dos programas pela politica por prioridade
+
+	quantidadeRodando = 0;
+	for(loop=0;loop<quantidadeProgramas;loop++){
+		if(progPrioridade[loop]->terminado == false){
+			quantidadeRodando++;
+		}
+	}
+
+	nomeMenor = (char*) malloc (sizeof(char) * 15);
+
+	for(loop=0;loop<quantidadeRodando;loop++)
+		progRodando[loop] = (ProgramaPrioridade*) malloc (sizeof(ProgramaPrioridade) * 25);
+
+	loop=0;
+	loop2=0;
+	while(loop<quantidadeProgramas){
+		if(progPrioridade[loop]->terminado == false){
+			progRodando[loop2] = progPrioridade[loop];
+			loop2++;
+		}
+		loop++;
+	}
+
+	strcpy(nomeMenor, progRodando[0]->nome);
+	menor = progRodando[0]->prioridade;
+
+	for(loop=0;loop<quantidadeRodando;loop++){
+
+		if(progRodando[loop]->prioridade < menor){
+			menor = progRodando[loop]->prioridade;
+			strcpy(nomeMenor, progRodando[loop]->nome);
+			
+		}
+	}
+
+	return nomeMenor;
 }
