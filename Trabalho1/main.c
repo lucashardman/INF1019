@@ -75,25 +75,6 @@ int main (void){
 	}
 	/* Fim: estruturas recebem os dados do arquivo */
 
-	/****************************************************************************/
-	// BLOCO DE TESTE:      
-	//                                                    
-	//printf("Marcador 1\n");
-	//printf("%d\n",contadorProgramas);
-	//
-	// Teste politica 1:														
-	//for(loop=0;loop<contadorProgramas;loop++)
-	//	printf("1: %s - prioridade: %d\n",lstProgramasPrioridade[loop]->nome, lstProgramasPrioridade[loop]->prioridade);
-	//
-	// Teste politica 2:														
-	//for(loop=0;loop<contadorProgramas;loop++)
-	//	printf("1: %s\n",lstProgramasRoundRobin[loop]->nome);
-	//
-	// Teste politica 3:														
-	//for(loop=0;loop<contadorProgramas;loop++)
-	//	printf("3: %s - numero de tickets: %d\n",lstProgramasLoteria[loop]->nome, lstProgramasLoteria[loop]->numeroTickets);
-	/****************************************************************************/
-
 	/* Chamada das funcoes de escalonamento */
 	if(metodoEscalonamento == 1){
 		escalonamentoPorPrioridade(contadorProgramas, lstProgramasPrioridade);
