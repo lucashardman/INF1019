@@ -42,8 +42,9 @@ static char *menorPrioridade(int quantidadeProgramas);
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
-	int loop1 = 0; //Variaveis auxiliares para loop
+	int loop1 = 0, loop2 = 0;; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
+	int timeSharing = 3000000; //Tempo reservado para a execucao de cada programa em microssegundos: 3 segundos
 
 	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
 	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
@@ -80,6 +81,63 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 
 	/* Inicio do algoritmo de Prioriodade */
 	printf("Menor prioridade: %s\n",menorPrioridade(quantidadeProgramas));
+	//loop1 = 1; //Menor prioridade eh 1 e vai ate 7
+	while(1){
+
+		
+		for(loop2=0;loop2<quantidadeProgramas;loop2++){ //Loop para percorrer todas as prioridades em ordem
+
+			if(strcmp(progPrioridade[loop2]->nome, menorPrioridade(quantidadeProgramas)) == 0){ //Testa se a prioridade atu
+				if(progPrioridade[loop2]->terminado == false){
+
+					kill(pid[loop2], SIGCONT); //Sinal para o programa entrar em estado de execucao
+					fflush(stdout);
+					
+					usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
+
+					/************************************************************
+					 * - waitpidResult < -1: espera por qualquer processo filho *
+					 * que seu grupo ID eh igual ao valor absoluto de pid.      *
+					 * - waitpidResult = -1: espera por qualquer processo filho.*
+					 * - waitpidResult = 0: espera por qualquer processo filho  *
+					 * que o seu grupo ID seja igual ao do processo que chama.  *
+					 * - waitpid < 0: espera pelo processo filho que o grupo ID *
+					 * eh igual ao valor do pid.                                *
+					 ************************************************************/
+					waitpidResult = waitpid(pid[loop2], &waitpidStatus, WNOHANG);
+
+					/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+					contadorTempo = contadorTempo + timeSharing/1000;
+
+					if(waitpidResult == 0){
+
+						progPrioridade[loop2]->tempoExecucao = contadorTempo;
+						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
+					}
+					else{ //Fim da execucao de um programa
+						progPrioridade[loop2]->tempoExecucao = contadorTempo;
+						printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop2]->nome, progPrioridade[loop2]->tempoExecucao/1000);
+						fflush(stdout);
+						progPrioridade[loop2]->terminado = true;
+					}
+				}
+			}
+			if(loop2 == quantidadeProgramas-1){
+				if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
+
+					printf("\nFim da execucao de todos programas pela politica de escalonamento por Prioridade\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+					return; //Finaliza a funcao de escalonamento por prioridade
+				}
+				else
+					loop2 = 0;
+			}
+		}
+
+		//loop1++; //Passa para a proxima prioridade
+
+		//if(loop1 == 8) //A maior prioridade eh 7, entao se loop1 for 8, recomeca
+		//	loop1 = 0;
+	}
 	/* Fim do algoritmo de Prioriodade */
 }
 

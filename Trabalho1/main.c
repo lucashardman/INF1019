@@ -35,11 +35,10 @@ int main (void){
 	 * 4 - Estrutura recebe os dados                                            *
 	 ****************************************************************************/
 
-	exec = fopen("exec.txt", "r");
+	exec = fopen("entrada.txt", "r");
 
 	if (exec == NULL){
 		printf("Erro na abertura do arquivo exec.exe");
-		system("pause");
 		exit(0);
 	}
 
