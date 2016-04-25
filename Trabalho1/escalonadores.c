@@ -28,6 +28,7 @@ static bool contidoNoVetor(int valor, int *vetor, int tamanho);
 static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes);
 static int sorteioBilhete(int limite);
 static char *menorPrioridade(int quantidadeProgramas);
+static int *ordemPrioridade(int quantidadeProgramas);
 
 /************************ Funcoes de escalonamento **************************/
 
@@ -45,6 +46,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	int loop1 = 0, loop2 = 0;; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 3000000; //Tempo reservado para a execucao de cada programa em microssegundos: 3 segundos
+	int *ordem;
 
 	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
 	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
@@ -80,7 +82,10 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	printf("\n");
 
 	/* Inicio do algoritmo de Prioriodade */
-	printf("Menor prioridade: %s",menorPrioridade(quantidadeProgramas));
+	printf("Menor prioridade: %s\n",menorPrioridade(quantidadeProgramas));
+	ordem = ordemPrioridade(quantidadeProgramas);
+
+	loop1 = 0;
 	loop2 = 0; //Menor prioridade eh 1 e vai ate 7
 	while(1){
 
@@ -90,48 +95,55 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 			return; //Finaliza a funcao de escalonamento por prioridade
 		}
 
-		if(strcmp(progPrioridade[loop2]->nome, menorPrioridade(quantidadeProgramas)) == 0){ //Testa se a prioridade atual eh a menor
+		for(loop2=0;loop2<quantidadeProgramas;loop2++){
+			if(ordem[loop1] == progPrioridade[loop2]->prioridade){
+				if(progPrioridade[loop2]->terminado == false){
 
-			printf("%s\n",progPrioridade[loop2]->nome);
-			kill(pid[loop2], SIGCONT); //Sinal para o programa entrar em estado de execucao
-			fflush(stdout);
+					kill(pid[loop2], SIGCONT); //Sinal para o programa entrar em estado de execucao
 					
-			usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
+					fflush(stdout);
+							
+					usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
 
-			/************************************************************
-			 * - waitpidResult < -1: espera por qualquer processo filho *
-			 * que seu grupo ID eh igual ao valor absoluto de pid.      *
-			 * - waitpidResult = -1: espera por qualquer processo filho.*
-			 * - waitpidResult = 0: espera por qualquer processo filho  *
-			 * que o seu grupo ID seja igual ao do processo que chama.  *
-			 * - waitpid < 0: espera pelo processo filho que o grupo ID *
-			 * eh igual ao valor do pid.                                *
-			 ************************************************************/
-			waitpidResult = waitpid(pid[loop2], &waitpidStatus, WNOHANG);
+					/************************************************************
+					 * - waitpidResult < -1: espera por qualquer processo filho *
+					 * que seu grupo ID eh igual ao valor absoluto de pid.      *
+					 * - waitpidResult = -1: espera por qualquer processo filho.*
+					 * - waitpidResult = 0: espera por qualquer processo filho  *
+					 * que o seu grupo ID seja igual ao do processo que chama.  *
+					 * - waitpid < 0: espera pelo processo filho que o grupo ID *
+					 * eh igual ao valor do pid.                                *
+					 ************************************************************/
+					waitpidResult = waitpid(pid[loop2], &waitpidStatus, WNOHANG);
 
-			/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
-			contadorTempo = contadorTempo + timeSharing/1000;
+					/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+					contadorTempo = contadorTempo + timeSharing/1000;
 
-			if(waitpidResult == 0){
+					if(waitpidResult == 0){
 
-				progPrioridade[loop2]->tempoExecucao = contadorTempo;
-				kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
-				loop2++;
-			}
-			else{ //Fim da execucao de um programa
-				progPrioridade[loop2]->tempoExecucao = contadorTempo;
-				printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop2]->nome, progPrioridade[loop2]->tempoExecucao/1000);
-				fflush(stdout);
-				progPrioridade[loop2]->terminado = true;
-				loop2++;
+						progPrioridade[loop2]->tempoExecucao = contadorTempo;
+						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
+						
+					}
+					else{ //Fim da execucao de um programa
+						progPrioridade[loop2]->tempoExecucao = contadorTempo;
+						printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop2]->nome, progPrioridade[loop2]->tempoExecucao/1000);
+						fflush(stdout);
+						progPrioridade[loop2]->terminado = true;
+						
+					}
+				}
+				else{
+					printf("%s ja terminou\n", progPrioridade[loop2]->nome);
+				}
 			}
 		}
 			
-			loop2++;
+		loop1++;
 
 		//Condicional responsavel por manter o loop1 rodando entre 0 e a quantidade de programas
-		if(loop2 == quantidadeProgramas)
-			loop2 = 0;
+		if(loop1 == quantidadeProgramas)
+			loop1 = 0;
 
 		fflush(stdout);
 	}
@@ -637,6 +649,8 @@ static int sorteioBilhete(int limite){
  * Retorno:                                                                 *
  * nomeMenor - retorna uma string que eh o nome do programa com menor       *
  * prioridade.                                                              *
+ * Obs: esta funcao acabou nao sendo utilizada, mas nao foi apagada por     *
+ * motivos de pena (porque deu mto trabalho)                                *
  ****************************************************************************/
 static char *menorPrioridade(int quantidadeProgramas){
 
@@ -685,4 +699,39 @@ static char *menorPrioridade(int quantidadeProgramas){
 	}
 
 	return nomeMenor;
+}
+
+/****************************************************************************
+ * Nome: ordemPrioridade                                                    *
+ * Descricao: serve para informar a ordem de prioridade dos programas.      *
+ * Utiliza um algoritimo de ordenacao por bolha (bubble sort) para ordenar  *
+ * as prioridades dos programas.                                            *
+ * Parametros:                                                              *
+ * quantidadeProgramas - quantidade de programas sendo escalonados          *
+ * Retorno:                                                                 *
+ * ordem - vetor com a ordem de execucao dos programas. Cada posicao do     *
+ * corresponde a prioridade de um programa                                  *
+ ****************************************************************************/
+static int *ordemPrioridade(int quantidadeProgramas){
+	
+	int loop1 = 0, loop2 = 0;
+	int *ordem;
+	int auxiliar = 100;
+
+	ordem = (int*) malloc (sizeof(int)*quantidadeProgramas);
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){
+		ordem[loop1] = progPrioridade[loop1]->prioridade;
+	}
+
+	for(loop1=quantidadeProgramas-1;loop1>=1;loop1--){
+		for(loop2=0;loop2<loop1;loop2++){
+			if(ordem[loop2]>ordem[loop2+1]){
+				auxiliar = ordem[loop2];
+				ordem[loop2] = ordem[loop2+1];
+				ordem[loop2+1] = auxiliar;
+			}
+		}
+	}
+	return ordem;
 }
