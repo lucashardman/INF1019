@@ -38,7 +38,7 @@ int main (void){
 	exec = fopen("entrada.txt", "r");
 
 	if (exec == NULL){
-		printf("Erro na abertura do arquivo exec.exe");
+		printf("Erro na abertura do arquivo entrada.exe");
 		exit(0);
 	}
 

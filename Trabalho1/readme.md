@@ -2,6 +2,9 @@
   
 ####Autor:
 Lucas Hardman<br/>
+
+####Plataforma:
+Linux<br/>
   
 ####Sobre:
 Trabalho de Sistemas de Computacao (INF1019) da PUC-Rio de 2016.1. O trabalho	consiste	em programas	que	implementem um

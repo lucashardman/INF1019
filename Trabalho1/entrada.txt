@@ -1,4 +1,4 @@
 Exec programa1 2
-Exec programa3 5
-Exec programa2 1
-Exec programa4 7
+Exec programa3 7
+Exec programa2 3
+Exec programa4 5

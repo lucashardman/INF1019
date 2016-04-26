@@ -29,6 +29,7 @@ static void distribuicaoBilhetes(int quantidadeProgramas, int quantidadeBilhetes
 static int sorteioBilhete(int limite);
 static char *menorPrioridade(int quantidadeProgramas);
 static int *ordemPrioridade(int quantidadeProgramas);
+static void imprimeRelatorio(char *relatorio);
 
 /************************ Funcoes de escalonamento **************************/
 
@@ -47,6 +48,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 3000000; //Tempo reservado para a execucao de cada programa em microssegundos: 3 segundos
 	int *ordem;
+	char relatorio[5000]; //Relatorio que sera impresso no saida.txt
 
 	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
 	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
@@ -55,6 +57,11 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
 
 	metodoEscalonamento = 1; //Por Prioridade
+
+	/* Inicializar relatorio para saida.txt */
+	strcpy(relatorio, "Relatorio:");
+	strcat(relatorio, "\n");
+	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializa progPrioridade e executa os programas e envia o sinal para entrarem em espera */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
@@ -82,7 +89,6 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	printf("\n");
 
 	/* Inicio do algoritmo de Prioriodade */
-	printf("Menor prioridade: %s\n",menorPrioridade(quantidadeProgramas));
 	ordem = ordemPrioridade(quantidadeProgramas);
 
 	loop1 = 0;
@@ -92,6 +98,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
 
 			printf("\nFim da execucao de todos programas pela politica de escalonamento por Prioridade\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+			imprimeRelatorio(relatorio);
 			return; //Finaliza a funcao de escalonamento por prioridade
 		}
 
@@ -123,6 +130,12 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 
 						progPrioridade[loop2]->tempoExecucao = contadorTempo;
 						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
+
+						strcat(relatorio, "Prioridade: ");
+						sprintf(relatorio, "%s%d",relatorio, ordem[loop1]);
+						strcat(relatorio, " - ");
+						strcat(relatorio, progPrioridade[loop2]->nome);
+						strcat(relatorio, "\n");
 						
 					}
 					else{ //Fim da execucao de um programa
@@ -130,7 +143,15 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 						printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop2]->nome, progPrioridade[loop2]->tempoExecucao/1000);
 						fflush(stdout);
 						progPrioridade[loop2]->terminado = true;
-						
+
+						strcat(relatorio, "Prioridade: ");
+						sprintf(relatorio, "%s%d",relatorio, ordem[loop1]);
+						strcat(relatorio, " - O programa ");
+						strcat(relatorio, progPrioridade[loop2]->nome);
+						strcat(relatorio, " terminou em ");
+						sprintf(relatorio, "%s%.2f",relatorio, progPrioridade[loop2]->tempoExecucao/1000);
+						strcat(relatorio, " segundos");
+						strcat(relatorio, "\n");		
 					}
 				}
 				else{
@@ -165,6 +186,8 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
+	char relatorio[5000]; //Relatorio que sera impresso no saida.txt
+
 	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
 	float contadorTempo = 0; //Responsavel por medir o tempo que cada programa demora pra executar
 
@@ -172,6 +195,11 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 	int waitpidStatus = 0; //Variavel para guardar o estado do processo pelo waitpid
 
 	metodoEscalonamento = 2; //Round-Robin
+
+	/* Inicializar relatorio para saida.txt */
+	strcpy(relatorio, "Relatorio:");
+	strcat(relatorio, "\n");
+	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializa progRoundRobin e executa os programas e envia o sinal para entrarem em espera */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
@@ -207,6 +235,7 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
 
 			printf("\nFim da execucao de todos programas pela politica de escalonamento Round-Robin\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+			imprimeRelatorio(relatorio);
 			return; //Finaliza a funcao de Round-Robin
 		}
 		
@@ -235,6 +264,10 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 				progRoundRobin[loop1]->tempoExecucao = contadorTempo;
 				kill(pid[loop1], SIGSTOP); //Sinal para o programa entrar em estado de espera
+
+				strcat(relatorio, progRoundRobin[loop1]->nome);
+				strcat(relatorio, "\n");
+
 				loop1++;
 			}
 			else{ //Fim da execucao de um programa
@@ -242,6 +275,14 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 				printf("O programa %s terminou em %.2f segundos.\n", progRoundRobin[loop1]->nome, progRoundRobin[loop1]->tempoExecucao/1000);
 				fflush(stdout);
 				progRoundRobin[loop1]->terminado = true;
+
+				strcat(relatorio, "O programa ");
+				strcat(relatorio, progRoundRobin[loop1]->nome);
+				strcat(relatorio, " terminou em ");
+				sprintf(relatorio, "%s%.2f",relatorio, progRoundRobin[loop1]->tempoExecucao/1000);
+				strcat(relatorio, " segundos");
+				strcat(relatorio, "\n");	
+
 				loop1++;
 			}
 		}
@@ -274,6 +315,8 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 500000; //Tempo reservado para a execucao de cada programa em microssegundos
 
+	char relatorio[5000]; //Relatorio que sera impresso no saida.txt
+
 	float contadorTempo = 0;
 
 	int waitpidResult = 0; //Variavel para guardar os resultados dos retornos da funcao waitpid
@@ -283,6 +326,11 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	int quantidadeRodando = quantidadeProgramas; // Guarda a quantidade de programas em execucao
 
 	metodoEscalonamento = 3; //Por Loteria
+
+	/* Inicializar relatorio para saida.txt */
+	strcpy(relatorio, "Relatorio:");
+	strcat(relatorio, "\n");
+	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializacao de progLoteria */
 	for(loop1=0;loop1<quantidadeProgramas;loop1++){
@@ -338,6 +386,7 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
 
 			printf("\nFim da execucao de todos programas pela politica de escalonamento por Loteria\nTempo total de execucao dos progaras: %.2f\n", contadorTempo/1000);
+			imprimeRelatorio(relatorio);
 			return; //Finaliza a funcao de Round-Robin
 		}
 
@@ -369,11 +418,28 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 
 						progLoteria[loop2]->tempoExecucao = contadorTempo;
 						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
+
+						strcat(relatorio, "Bilhete: ");
+						sprintf(relatorio, "%s%d",relatorio, loop1);
+						strcat(relatorio, " - ");
+						strcat(relatorio, progLoteria[loop2]->nome);
+						strcat(relatorio, "\n");
+
 					}
 					else{ //Fim da execucao de um programa
 						if(progLoteria[loop2]->terminado != true){
 							progLoteria[loop2]->tempoExecucao = contadorTempo;
 							printf("O programa %s terminou em %.2f segundos.\n", progLoteria[loop2]->nome, progLoteria[loop2]->tempoExecucao/1000);
+
+							strcat(relatorio, "Bilhete: ");
+							sprintf(relatorio, "%s%d",relatorio, loop1);
+							strcat(relatorio, " - O programa ");
+							strcat(relatorio, progLoteria[loop2]->nome);
+							strcat(relatorio, " terminou em ");
+							sprintf(relatorio, "%s%.2f",relatorio, progLoteria[loop2]->tempoExecucao/1000);
+							strcat(relatorio, " segundos");
+							strcat(relatorio, "\n");
+
 							fflush(stdout);
 							progLoteria[loop2]->terminado = true;
 						}
@@ -734,4 +800,21 @@ static int *ordemPrioridade(int quantidadeProgramas){
 		}
 	}
 	return ordem;
+}
+
+static void imprimeRelatorio(char *relatorio){
+	
+	printf("%s", relatorio);
+	FILE * saida;
+
+	saida = fopen("saida.txt", "w");
+
+	if (saida == NULL){
+		printf("Erro na abertura do arquivo saida.exe");
+		exit(0);
+	}
+
+	fprintf(saida,"%s",relatorio);
+
+	fclose(saida);
 }
