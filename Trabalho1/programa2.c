@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* Programa I/O-BOUND - output: printf com o tempo que falta para terminar */
+
 int main (void){
 
 	int tempo = 19;

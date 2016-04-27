@@ -2,19 +2,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* Programa CPU-BOUND - Incrementa uma variavel chamada soma ate chegar em 24 */
+
 int main (void){
 
-	int tempo = 24;
+	int soma = 0;
 
-	printf("Este programa dura %d segundos.\n", tempo+1);
-
-	while(tempo > 0){
-		printf("Programa4 rodando. Faltam %d segundos.\n", tempo);
+	while(soma < 24){
 		sleep(1);
-		tempo--;
+		soma++;
 	}
-	
-	printf("Programa4 finalizado.\n");
 
 	return 0;
 }

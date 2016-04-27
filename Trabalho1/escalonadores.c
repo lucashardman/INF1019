@@ -60,7 +60,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 
 	/* Inicializar relatorio para saida.txt */
 	strcpy(relatorio, "Relatorio:");
-	strcat(relatorio, "\n");
+	strcat(relatorio, "\n\n");
 	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializa progPrioridade e executa os programas e envia o sinal para entrarem em espera */
@@ -151,7 +151,7 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 						strcat(relatorio, " terminou em ");
 						sprintf(relatorio, "%s%.2f",relatorio, progPrioridade[loop2]->tempoExecucao/1000);
 						strcat(relatorio, " segundos");
-						strcat(relatorio, "\n");		
+						strcat(relatorio, "\n\n");		
 					}
 				}
 				else{
@@ -198,7 +198,7 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 
 	/* Inicializar relatorio para saida.txt */
 	strcpy(relatorio, "Relatorio:");
-	strcat(relatorio, "\n");
+	strcat(relatorio, "\n\n");
 	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializa progRoundRobin e executa os programas e envia o sinal para entrarem em espera */
@@ -281,7 +281,7 @@ void escalonamentoRoundRobin(int quantidadeProgramas, ProgramaRoundRobin *progra
 				strcat(relatorio, " terminou em ");
 				sprintf(relatorio, "%s%.2f",relatorio, progRoundRobin[loop1]->tempoExecucao/1000);
 				strcat(relatorio, " segundos");
-				strcat(relatorio, "\n");	
+				strcat(relatorio, "\n\n");	
 
 				loop1++;
 			}
@@ -329,7 +329,7 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 
 	/* Inicializar relatorio para saida.txt */
 	strcpy(relatorio, "Relatorio:");
-	strcat(relatorio, "\n");
+	strcat(relatorio, "\n\n");
 	/* Fim: inicializa relatorio para saida.txt */
 
 	/* Inicializacao de progLoteria */
@@ -375,6 +375,22 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 	printf("\n");
 
 	/* Inicio do algoritmo de escalonamento por loteria */
+
+	for(loop1=0;loop1<quantidadeProgramas;loop1++){ //Loop para cada programa
+
+		strcat(relatorio,"Bilhetes do ");
+		strcat(relatorio,progLoteria[loop1]->nome);
+		strcat(relatorio,": {");
+		for(loop2=0;loop2<progLoteria[loop1]->quantidadeBilhetes;loop2++){ //Para cada bilhete de cada programa
+
+			sprintf(relatorio,"%s%d", relatorio, progLoteria[loop1]->bilhetes[loop2]);
+
+			if(loop2 != progLoteria[loop1]->quantidadeBilhetes-1)
+				strcat(relatorio,", ");
+		}
+		strcat(relatorio, "}\n\n");
+	}
+	/* Fim: print dos bilhetes de cada programa */
 
 	loop1 = 1; //Bilhetes vao de 1 a 20, e nao de 0 a 19
 	while(1){
@@ -438,7 +454,7 @@ void escalonamentoLoteria(int quantidadeProgramas, ProgramaLoteria *programas[ma
 							strcat(relatorio, " terminou em ");
 							sprintf(relatorio, "%s%.2f",relatorio, progLoteria[loop2]->tempoExecucao/1000);
 							strcat(relatorio, " segundos");
-							strcat(relatorio, "\n");
+							strcat(relatorio, "\n\n");
 
 							fflush(stdout);
 							progLoteria[loop2]->terminado = true;
