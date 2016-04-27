@@ -1,0 +1,329 @@
+Relatorio
+
+Nome:
+Lucas Hardman - 1113567
+Cleo Peixoto - 1113657
+
+Compilacao e execucao:
+
+gcc programa1.c -o programa1
+gcc programa2.c -o programa2
+gcc programa3.c -o programa3
+gcc programa4.c -o programa4
+gcc main.c escalonadores.c -o trabalho1
+./trabalho1
+-> Digitar 1 para executar escalonamento por prioridade
+-> Digitar 2 para executar escalonamento por round-robin
+-> Digitar 3 para executar escalonamento por loteria
+
+Entrada:
+
+-> Digitar 1, 2 ou 3 para escolher respectivamente as politicas de escalonamento por prioridade, round-robin ou loteria
+-> Arquivo entrada.txt. O arquivo pode ter 3 formatos diferentes dependendo da politica de escalonamento:
+1) Por prioridade:
+Exec <nome_do_programa> <prioridade>
+onde prioridade eh um numero de 1 a 7
+2) Round-Robin:
+Exec <nome_do_programa>
+3) Por loteria:
+Exec <nome_do_programa> <numero_de_bilhetes_a_receber>
+onde o numero de bilhetes a receber deve ser maior que zero e a soma dos numeros de bilhetes a receber deve ser igual ou inferior a 20
+
+Saida:
+
+-> Mensagens no prompt de comando sobre o andamento do escalonamento
+-> Arquivo saida.txt mostrando como ocorre a preempcao na execucao dos processos:
+1) Por prioridade: Prioridade e nome do programa, na ordem de execucao
+2) Round-Robin: nome do programa na ordem de execucao
+3) Por loteria: todos os bilhetes de cada programa e o bilhete sorteado seguido do programa que possui o bilhete (mostrando assim o bilhete + o nome do programa em ordem de execucao). Nao mostra os bilhetes sorteados que nao sao de nenhum no programa como mostra pelo printf.
+
+
+Relatorio de teste:
+
+************ 1) Por prioridade: ************
+
+-> entrada.txt
+
+Exec programa1 5
+Exec programa3 2
+Exec programa2 2
+Exec programa4 7
+Exec programa5 1
+
+-> saida.txt
+
+Relatorio:
+
+Prioridade: 5 - programa1
+Prioridade: 1 - programa5
+Prioridade: 1 - programa5
+Prioridade: 1 - O programa programa5 terminou em 18.00 segundos
+
+Prioridade: 2 - programa3
+Prioridade: 2 - programa3
+Prioridade: 2 - programa3
+Prioridade: 2 - programa3
+Prioridade: 2 - O programa programa3 terminou em 33.00 segundos
+
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - O programa programa2 terminou em 57.00 segundos
+
+Prioridade: 5 - programa1
+Prioridade: 5 - programa1
+Prioridade: 5 - programa1
+Prioridade: 5 - programa1
+Prioridade: 5 - O programa programa1 terminou em 66.00 segundos
+
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - programa4
+Prioridade: 7 - O programa programa4 terminou em 96.00 segundos
+
+Explicacao: apos cada 3 segundos o arquivo recebe um output com a prioridade e o nome do arquivo que executou nesse intervalo de tempo. A escalonamento comeca com a execucao do primeiro programa chamado
+e depois de 3 segundos chama o programa de menor prioridade que falta. A cada 3 segundos ele recalcula o programa de menor prioridade, se for o mesmo a execucao volta para o mesmo programa, se for outro
+a execucao passa para este programa.
+
+************ 2) Roud-Robin: ************
+
+-> entrada.txt
+
+Exec programa1
+Exec programa3
+Exec programa2
+Exec programa4
+Exec programa5
+
+-> saida.txt
+
+Relatorio:
+
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+programa5
+programa1
+programa3
+programa2
+programa4
+O programa programa5 terminou em 20.00 segundos
+
+programa1
+programa3
+programa2
+programa4
+programa1
+programa3
+programa2
+programa4
+programa1
+O programa programa3 terminou em 25.00 segundos
+
+programa2
+programa4
+programa1
+programa2
+programa4
+programa1
+programa2
+programa4
+programa1
+programa2
+programa4
+programa1
+programa2
+programa4
+O programa programa1 terminou em 32.50 segundos
+
+programa2
+programa4
+programa2
+programa4
+programa2
+programa4
+programa2
+programa4
+programa2
+programa4
+programa2
+programa4
+O programa programa2 terminou em 39.00 segundos
+
+programa4
+programa4
+programa4
+programa4
+programa4
+programa4
+programa4
+programa4
+programa4
+O programa programa4 terminou em 44.00 segundos
+
+Explicacao: o escalonamento eh por ordem de execucao. O escalonador da a vez pro primeiro programa executar por 0.5 segundos depois ele passa a vez pro proximo que
+foi chamado, e assim em diante.
+
+************ 3) Por loteria: ************
+
+-> entrada.txt
+
+Exec programa1 5
+Exec programa3 3
+Exec programa2 3
+Exec programa4 4
+Exec programa5 5
+
+-> saida.txt
+
+Relatorio:
+
+Bilhetes do programa1: {17, 8, 16, 19, 4}
+
+Bilhetes do programa3: {7, 5, 11}
+
+Bilhetes do programa2: {10, 13, 15}
+
+Bilhetes do programa4: {2, 12, 3, 20}
+
+Bilhetes do programa5: {6, 18, 1, 9, 14}
+
+Bilhete: 11 - programa3
+Bilhete: 9 - programa5
+Bilhete: 19 - programa1
+Bilhete: 19 - programa1
+Bilhete: 15 - programa2
+Bilhete: 5 - programa3
+Bilhete: 15 - programa2
+Bilhete: 13 - programa2
+Bilhete: 7 - programa3
+Bilhete: 14 - programa5
+Bilhete: 3 - programa4
+Bilhete: 9 - programa5
+Bilhete: 18 - programa5
+Bilhete: 17 - programa1
+Bilhete: 6 - programa5
+Bilhete: 4 - programa1
+Bilhete: 18 - programa5
+Bilhete: 7 - programa3
+Bilhete: 14 - programa5
+Bilhete: 20 - programa4
+Bilhete: 12 - programa4
+Bilhete: 13 - programa2
+Bilhete: 18 - O programa programa5 terminou em 11.50 segundos
+
+Bilhete: 19 - programa1
+Bilhete: 8 - programa1
+Bilhete: 17 - programa1
+Bilhete: 19 - programa1
+Bilhete: 10 - programa2
+Bilhete: 4 - programa1
+Bilhete: 19 - programa1
+Bilhete: 19 - programa1
+Bilhete: 3 - programa4
+Bilhete: 13 - programa2
+Bilhete: 13 - programa2
+Bilhete: 5 - programa3
+Bilhete: 16 - programa1
+Bilhete: 4 - programa1
+Bilhete: 3 - programa4
+Bilhete: 5 - programa3
+Bilhete: 11 - programa3
+Bilhete: 8 - programa1
+Bilhete: 3 - programa4
+Bilhete: 19 - programa1
+Bilhete: 2 - programa4
+Bilhete: 2 - programa4
+Bilhete: 10 - programa2
+Bilhete: 15 - programa2
+Bilhete: 20 - programa4
+Bilhete: 19 - programa1
+Bilhete: 8 - programa1
+Bilhete: 15 - programa2
+Bilhete: 7 - programa3
+Bilhete: 4 - programa1
+Bilhete: 12 - programa4
+Bilhete: 5 - programa3
+Bilhete: 3 - programa4
+Bilhete: 15 - programa2
+Bilhete: 2 - programa4
+Bilhete: 16 - O programa programa1 terminou em 33.50 segundos
+
+Bilhete: 3 - programa4
+Bilhete: 15 - programa2
+Bilhete: 10 - programa2
+Bilhete: 3 - programa4
+Bilhete: 5 - programa3
+Bilhete: 15 - programa2
+Bilhete: 13 - programa2
+Bilhete: 20 - programa4
+Bilhete: 13 - programa2
+Bilhete: 15 - programa2
+Bilhete: 2 - programa4
+Bilhete: 10 - programa2
+Bilhete: 12 - programa4
+Bilhete: 15 - programa2
+Bilhete: 3 - programa4
+Bilhete: 20 - programa4
+Bilhete: 2 - programa4
+Bilhete: 20 - programa4
+Bilhete: 12 - programa4
+Bilhete: 3 - programa4
+Bilhete: 3 - programa4
+Bilhete: 7 - O programa programa3 terminou em 54.50 segundos
+
+Bilhete: 12 - programa4
+Bilhete: 2 - programa4
+Bilhete: 15 - programa2
+Bilhete: 20 - programa4
+Bilhete: 12 - O programa programa4 terminou em 59.50 segundos
+
+Bilhete: 15 - programa2
+Bilhete: 13 - programa2
+Bilhete: 15 - programa2
+Bilhete: 15 - programa2
+Bilhete: 10 - O programa programa2 terminou em 66.50 segundos
+
+Explicacao: primeiro o arquivo recebe a informacao de quais programas possuem quais bilhetes. Depois recebe a ordem de execucao. A cada 0.5 segundos um bilhete eh sorteado e
+o programa que possui este bilhete recebe passa para o estado de execucao.

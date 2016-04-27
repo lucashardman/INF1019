@@ -44,10 +44,9 @@ static void imprimeRelatorio(char *relatorio);
  ****************************************************************************/
 void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *programas[maximo_programas]){
 
-	int loop1 = 0, loop2 = 0;; //Variaveis auxiliares para loop
+	int loop2 = 0, loop1 = 0, loop0 = 0;; //Variaveis auxiliares para loop
 	int pid[maximo_programas]; //Variaveis responsaveis por guardar os pid dos processos
 	int timeSharing = 3000000; //Tempo reservado para a execucao de cada programa em microssegundos: 3 segundos
-	int *ordem;
 	char relatorio[5000]; //Relatorio que sera impresso no saida.txt
 
 	int quantidadeRodando = quantidadeProgramas; //Quantidade de processos em execucao
@@ -89,10 +88,9 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 	printf("\n");
 
 	/* Inicio do algoritmo de Prioriodade */
-	ordem = ordemPrioridade(quantidadeProgramas);
-
-	loop1 = 0;
-	loop2 = 0; //Menor prioridade eh 1 e vai ate 7
+	loop2 = 0;
+	loop1 = 1;
+	loop0 = 0;
 	while(1){
 
 		if(testaProgramasFinalizados(quantidadeProgramas, &quantidadeRodando) == true){ // Testa se todos os programas ja foram finalizados
@@ -102,66 +100,114 @@ void escalonamentoPorPrioridade(int quantidadeProgramas, ProgramaPrioridade *pro
 			return; //Finaliza a funcao de escalonamento por prioridade
 		}
 
-		for(loop2=0;loop2<quantidadeProgramas;loop2++){
-			if(ordem[loop1] == progPrioridade[loop2]->prioridade){
-				if(progPrioridade[loop2]->terminado == false){
-
-					kill(pid[loop2], SIGCONT); //Sinal para o programa entrar em estado de execucao
-					
-					fflush(stdout);
-							
-					usleep(timeSharing); //0.5 segundos = 500.000 microssegundos
-
-					/************************************************************
-					 * - waitpidResult < -1: espera por qualquer processo filho *
-					 * que seu grupo ID eh igual ao valor absoluto de pid.      *
-					 * - waitpidResult = -1: espera por qualquer processo filho.*
-					 * - waitpidResult = 0: espera por qualquer processo filho  *
-					 * que o seu grupo ID seja igual ao do processo que chama.  *
-					 * - waitpid < 0: espera pelo processo filho que o grupo ID *
-					 * eh igual ao valor do pid.                                *
-					 ************************************************************/
-					waitpidResult = waitpid(pid[loop2], &waitpidStatus, WNOHANG);
-
-					/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
-					contadorTempo = contadorTempo + timeSharing/1000;
-
-					if(waitpidResult == 0){
-
-						progPrioridade[loop2]->tempoExecucao = contadorTempo;
-						kill(pid[loop2], SIGSTOP); //Sinal para o programa entrar em estado de espera
-
-						strcat(relatorio, "Prioridade: ");
-						sprintf(relatorio, "%s%d",relatorio, ordem[loop1]);
-						strcat(relatorio, " - ");
-						strcat(relatorio, progPrioridade[loop2]->nome);
-						strcat(relatorio, "\n");
-						
-					}
-					else{ //Fim da execucao de um programa
-						progPrioridade[loop2]->tempoExecucao = contadorTempo;
-						printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop2]->nome, progPrioridade[loop2]->tempoExecucao/1000);
-						fflush(stdout);
-						progPrioridade[loop2]->terminado = true;
-
-						strcat(relatorio, "Prioridade: ");
-						sprintf(relatorio, "%s%d",relatorio, ordem[loop1]);
-						strcat(relatorio, " - O programa ");
-						strcat(relatorio, progPrioridade[loop2]->nome);
-						strcat(relatorio, " terminou em ");
-						sprintf(relatorio, "%s%.2f",relatorio, progPrioridade[loop2]->tempoExecucao/1000);
-						strcat(relatorio, " segundos");
-						strcat(relatorio, "\n\n");		
-					}
-				}
-				else{
-					printf("%s ja terminou\n", progPrioridade[loop2]->nome);
-				}
-			}
-		}
+		/* Comeca pelo primeiro programa */
+		if(loop2 == 0){
+			kill(pid[loop0], SIGCONT); //Sinal para o programa entrar em estado de execucao
 			
-		loop1++;
+			fflush(stdout);
+							
+			usleep(timeSharing); //3 segundos = 3.000.000 microssegundos
+		
+			/************************************************************
+			 * - waitpidResult < -1: espera por qualquer processo filho *
+			 * que seu grupo ID eh igual ao valor absoluto de pid.      *
+			 * - waitpidResult = -1: espera por qualquer processo filho.*
+			 * - waitpidResult = 0: espera por qualquer processo filho  *
+			 * que o seu grupo ID seja igual ao do processo que chama.  *
+			 * - waitpid < 0: espera pelo processo filho que o grupo ID *
+			 * eh igual ao valor do pid.                                *
+			 ************************************************************/
+			waitpidResult = waitpid(pid[loop0], &waitpidStatus, WNOHANG);
+				
+			/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+			contadorTempo = contadorTempo + timeSharing/1000;
 
+			if(waitpidResult == 0){
+
+				progPrioridade[loop0]->tempoExecucao = contadorTempo;
+				kill(pid[loop0], SIGSTOP); //Sinal para o programa entrar em estado de espera
+
+				strcat(relatorio, "Prioridade: ");
+				sprintf(relatorio, "%s%d",relatorio, progPrioridade[loop0]->prioridade);
+				strcat(relatorio, " - ");
+				strcat(relatorio, progPrioridade[loop0]->nome);
+				strcat(relatorio, "\n");
+						
+			}
+			else{ //Fim da execucao de um programa
+				progPrioridade[loop0]->tempoExecucao = contadorTempo;
+				printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop0]->nome, progPrioridade[loop0]->tempoExecucao/1000);
+				fflush(stdout);
+				progPrioridade[loop0]->terminado = true;
+
+				strcat(relatorio, "Prioridade: ");
+				sprintf(relatorio, "%s%d",relatorio, progPrioridade[loop0]->prioridade);
+				strcat(relatorio, " - O programa ");
+				strcat(relatorio, progPrioridade[loop0]->nome);
+				strcat(relatorio, " terminou em ");
+				sprintf(relatorio, "%s%.2f",relatorio, progPrioridade[loop0]->tempoExecucao/1000);
+				strcat(relatorio, " segundos");
+				strcat(relatorio, "\n\n");		
+			}
+
+		}
+		/* Depois da cota de tempo do primeiro programa, passa para o proximo com menor prioridade */
+		else if(strcmp(menorPrioridade(quantidadeProgramas), progPrioridade[loop1]->nome) == 0){ //Checa se possui a menor prioridade
+
+			kill(pid[loop1], SIGCONT); //Sinal para o programa entrar em estado de execucao
+			
+			fflush(stdout);
+							
+			usleep(timeSharing); //3 segundos = 3.000.000 microssegundos
+		
+			/************************************************************
+			 * - waitpidResult < -1: espera por qualquer processo filho *
+			 * que seu grupo ID eh igual ao valor absoluto de pid.      *
+			 * - waitpidResult = -1: espera por qualquer processo filho.*
+			 * - waitpidResult = 0: espera por qualquer processo filho  *
+			 * que o seu grupo ID seja igual ao do processo que chama.  *
+			 * - waitpid < 0: espera pelo processo filho que o grupo ID *
+			 * eh igual ao valor do pid.                                *
+			 ************************************************************/
+			waitpidResult = waitpid(pid[loop1], &waitpidStatus, WNOHANG);
+				
+			/* Conta quanto tempo esta se passando ao longo da execucao dos programas */
+			contadorTempo = contadorTempo + timeSharing/1000;
+
+			if(waitpidResult == 0){
+
+				progPrioridade[loop1]->tempoExecucao = contadorTempo;
+				kill(pid[loop1], SIGSTOP); //Sinal para o programa entrar em estado de espera
+
+				strcat(relatorio, "Prioridade: ");
+				sprintf(relatorio, "%s%d",relatorio, progPrioridade[loop1]->prioridade);
+				strcat(relatorio, " - ");
+				strcat(relatorio, progPrioridade[loop1]->nome);
+				strcat(relatorio, "\n");
+						
+			}
+			else{ //Fim da execucao de um programa
+				progPrioridade[loop1]->tempoExecucao = contadorTempo;
+				printf("O programa %s terminou em %.2f segundos.\n", progPrioridade[loop1]->nome, progPrioridade[loop1]->tempoExecucao/1000);
+				fflush(stdout);
+				progPrioridade[loop1]->terminado = true;
+
+				strcat(relatorio, "Prioridade: ");
+				sprintf(relatorio, "%s%d",relatorio, progPrioridade[loop1]->prioridade);
+				strcat(relatorio, " - O programa ");
+				strcat(relatorio, progPrioridade[loop1]->nome);
+				strcat(relatorio, " terminou em ");
+				sprintf(relatorio, "%s%.2f",relatorio, progPrioridade[loop1]->tempoExecucao/1000);
+				strcat(relatorio, " segundos");
+				strcat(relatorio, "\n\n");		
+			}			
+		}
+		else if(progPrioridade[loop1]->terminado == true){
+			printf("%s ja terminou\n", progPrioridade[loop1]->nome);
+		}
+
+		loop1++;
+		loop2 = 1;
 		//Condicional responsavel por manter o loop1 rodando entre 0 e a quantidade de programas
 		if(loop1 == quantidadeProgramas)
 			loop1 = 0;
@@ -731,8 +777,6 @@ static int sorteioBilhete(int limite){
  * Retorno:                                                                 *
  * nomeMenor - retorna uma string que eh o nome do programa com menor       *
  * prioridade.                                                              *
- * Obs: esta funcao acabou nao sendo utilizada, mas nao foi apagada por     *
- * motivos de pena (porque deu mto trabalho)                                *
  ****************************************************************************/
 static char *menorPrioridade(int quantidadeProgramas){
 
@@ -793,6 +837,8 @@ static char *menorPrioridade(int quantidadeProgramas){
  * Retorno:                                                                 *
  * ordem - vetor com a ordem de execucao dos programas. Cada posicao do     *
  * corresponde a prioridade de um programa                                  *
+ * Obs: esta funcao acabou nao sendo utilizada, mas nao foi apagada por     *
+ * motivos de pena (porque deu mto trabalho)                                *
  ****************************************************************************/
 static int *ordemPrioridade(int quantidadeProgramas){
 	
@@ -819,7 +865,7 @@ static int *ordemPrioridade(int quantidadeProgramas){
 }
 
 /****************************************************************************
- * Nome: ordemPrioridade                                                    *
+ * Nome: imprimeRelatorio                                                   *
  * Descricao: serve para imprimir um arquivo saida.txt com o relatorio      *
  * que descreve o andamento do escalonamento                                *
  * Parametros:                                                              *

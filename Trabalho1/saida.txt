@@ -1,35 +1,39 @@
 Relatorio:
 
-Prioridade: 2 - programa3
 Prioridade: 3 - programa1
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - programa4
+Prioridade: 1 - O programa programa4 terminou em 33.00 segundos
+
 Prioridade: 2 - programa3
-Prioridade: 3 - programa1
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
 Prioridade: 2 - programa3
-Prioridade: 3 - programa1
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
 Prioridade: 2 - programa3
-Prioridade: 3 - programa1
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
-Prioridade: 2 - O programa programa3 terminou em 51.00 segundos
+Prioridade: 2 - programa3
+Prioridade: 2 - O programa programa3 terminou em 48.00 segundos
+
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - programa2
+Prioridade: 2 - O programa programa2 terminou em 72.00 segundos
 
 Prioridade: 3 - programa1
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
-Prioridade: 3 - O programa programa1 terminou em 63.00 segundos
+Prioridade: 3 - programa1
+Prioridade: 3 - programa1
+Prioridade: 3 - programa1
+Prioridade: 3 - O programa programa1 terminou em 87.00 segundos
 
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
-Prioridade: 5 - programa2
-Prioridade: 7 - programa4
-Prioridade: 5 - O programa programa2 terminou em 78.00 segundos
-
-Prioridade: 7 - programa4
-Prioridade: 7 - programa4
-Prioridade: 7 - O programa programa4 terminou em 87.00 segundos
+Prioridade: 4 - programa5
+Prioridade: 4 - programa5
+Prioridade: 4 - O programa programa5 terminou em 96.00 segundos
 
