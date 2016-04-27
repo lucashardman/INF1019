@@ -802,6 +802,13 @@ static int *ordemPrioridade(int quantidadeProgramas){
 	return ordem;
 }
 
+/****************************************************************************
+ * Nome: ordemPrioridade                                                    *
+ * Descricao: serve para imprimir um arquivo saida.txt com o relatorio      *
+ * que descreve o andamento do escalonamento                                *
+ * Parametros:                                                              *
+ * relatorio - string que sera impressa no arquivo saida.txt                *
+ ****************************************************************************/
 static void imprimeRelatorio(char *relatorio){
 	
 	printf("%s", relatorio);
