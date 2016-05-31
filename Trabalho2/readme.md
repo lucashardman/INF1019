@@ -30,7 +30,7 @@ simulador.log, ou seja um compilador, um programa científico, um compressor de 
 
 ####Saída:
 Quando o ultimo acesso à memoria for processado, o simulador deve gerar um pequeno relatório, contendo: <br/>
--> A configuração utilizada (os quatro parâmetros de sim-virtual);
--> O número total de acessos à memória contidos no arquivo;
--> O número de page faults (páginas carregadas na memória);
--> O número de páginas "sujas" que tiveram que ser escritas de volta no disco.
+-> A configuração utilizada (os quatro parâmetros de sim-virtual); <br/>
+-> O número total de acessos à memória contidos no arquivo; <br/>
+-> O número de page faults (páginas carregadas na memória); <br/>
+-> O número de páginas "sujas" que tiveram que ser escritas de volta no disco. <br/>
