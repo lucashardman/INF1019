@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 struct log{
 	unsigned int endereco;
@@ -8,7 +9,7 @@ struct log{
 };
 typedef struct log Log;
 
-int simulacao(const char* algoritmo, const char* arquivoNome, int paginaTamanho, int memoriaTamanho);
+void simulacao(const char* algoritmo, const char* arquivoNome, int paginaTamanho, int memoriaTamanho);
 Log *carregarLog(const char* arquivoNome, int* quantidade);
 
 int main (int argc, const char *argv[]){
@@ -62,7 +63,7 @@ void simulacao(const char* algoritmo, const char* arquivoNome, int paginaTamanho
 	}
 
 	//Leitura do Log:
-	*logs = carregarLog(arquivoNome, &logQuantidade);
+	logs = carregarLog(arquivoNome, &logQuantidade);
 	if(!logs){
 		printf("Erro ao carregar o arquivo .log. Tente novamente.\n");
 		exit(0);
@@ -72,7 +73,7 @@ void simulacao(const char* algoritmo, const char* arquivoNome, int paginaTamanho
 
 Log *carregarLog(const char* arquivoNome, int* quantidade){
 
-	int c, lines, loop;
+	int c, linhas, loop;
 	int contadorCaracteres = 0;
 
 	Log *logEntradas;
@@ -92,10 +93,10 @@ Log *carregarLog(const char* arquivoNome, int* quantidade){
 	}
 
 	fseek(fp, 0, SEEK_END);
-	lines = ftell(fp) / contadorCaracteres;
-	printfd("Numero de linhas no arquivo .log: %d\n", lines);
+	linhas = ftell(fp) / contadorCaracteres;
+	printf("Numero de linhas no arquivo .log: %d\n", linhas);
 
-	*logEntradas = (Log*)malloc(lines * sizeof(Log));
+	logEntradas = (Log*)malloc(linhas * sizeof(Log));
 	if(!logEntradas){
 		printf("Erro na alocacao de memoria.\n");
 		return NULL;
@@ -103,7 +104,7 @@ Log *carregarLog(const char* arquivoNome, int* quantidade){
 
 	fseek(fp, 0, SEEK_SET);
 
-	for(loop = 0; loop < lines; ++loop){
+	for(loop = 0; loop < linhas; ++loop){
 		if(fscanf(fp, "%x %c ", &logEntradas[loop].endereco, &logEntradas[loop].acesso) != 2){
 			printf("Erro ao carregar o arquivo .log. Certifique-se que cada linha tem o mesmo numero de caracteres");
 			break;
