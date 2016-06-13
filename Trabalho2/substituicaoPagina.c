@@ -23,7 +23,7 @@ PaginaTabela *criarPaginaTabela (int tamanho){
 	return paginaTabela;
 }
 
-getPaginaBits(int tamanho){
+int getPaginaBits(int tamanho){
 	return log2(tamanho << 10);
 }
 
@@ -31,11 +31,11 @@ int *criarVetorPagina (int memoriaTamanho, int paginaTamanho, int *nVetorPagina)
 
 	int *vetorPaginas, loop;
 
-	*nVetorPagina = MemoriaTamanho / paginaTamanho;
+	*nVetorPagina = memoriaTamanho / paginaTamanho;
 	printf("Maximo de paginas ao mesmo tempo: %d\n", *nVetorPagina);
 
 	vetorPaginas = (int*) malloc ((*nVetorPagina) * sizeof(int));
-	if(!=vetorPaginas){
+	if(!vetorPaginas){
 		printf("Erro na alocacao de memoria para o vetor de paginas.\n");
 		return NULL;
 	}
@@ -57,4 +57,80 @@ void atualizaPaginas (PaginaTabela * paginaTabela, int *paginaVetor, int nPagina
 			paginaTabela[index].r = 0;
 		}
 	}
+}
+
+int algLRU(PaginaTabela *paginaTabela, int *paginaVetor, int nPaginaVetor){
+
+	int minVetorPaginaNaoAcessadaIndex = -1;
+	int minTempoPaginaNaoAcessada;
+	int minPaginaVetorIndex = -1;
+	int minTempoPagina;
+
+	int loop;
+
+	for(loop=0;loop<nPaginaVetor; ++loop){
+		if(loop == 0){
+			minPaginaVetorIndex = loop;
+			minTempoPagina = paginaTabela[paginaVetor[loop]].ultimoAcesso;
+			if(paginaTabela[paginaVetor[loop]].r == 0){
+				minVetorPaginaNaoAcessadaIndex = loop;
+				minTempoPaginaNaoAcessada = minTempoPagina;
+			}
+		}
+		else if(paginaTabela[paginaVetor[loop]].ultimoAcesso < minTempoPagina){
+			minPaginaVetorIndex = loop;
+			minTempoPagina = paginaTabela[paginaVetor[loop]].ultimoAcesso;
+			if(paginaTabela[paginaVetor[loop]].r == 0){
+				minVetorPaginaNaoAcessadaIndex = loop;
+				minTempoPaginaNaoAcessada = minTempoPagina;
+			}
+		}
+	}
+
+	if(minVetorPaginaNaoAcessadaIndex != -1)
+		return minVetorPaginaNaoAcessadaIndex;
+	return minPaginaVetorIndex;
+}
+int algNRU(PaginaTabela *paginaTabela, int *paginaVetor, int nPaginaVetor){
+
+	int x,y;
+
+	for(y=0; y<4; ++y){
+		for(x=0; x<nPaginaVetor; ++x){
+			PaginaTabela *pagina = &paginaTabela[paginaVetor[x]];
+			if(y == 0 && pagina->r == 0 && pagina->w == 0){
+				return x;
+			}
+			if(y == 1 &&  pagina->r == 0 && pagina->w == 1){
+				return x;
+			}
+			if(y == 2 && pagina->r == 1 && pagina->w == 0){
+				return x;
+			}
+			if(y == 3 && pagina->r == 1 && pagina->w == 1){
+				return x;
+			}
+		}
+	}
+	return 0;
+}
+int algSEG(PaginaTabela *paginaTabela, int *paginaVetor, int nPaginaVetor){
+
+	int paginaIndex = paginaVetor[0];
+	int loop;
+
+	do{
+		for(loop=0;loop<nPaginaVetor; ++loop){
+			paginaVetor[loop] = paginaVetor[loop+1];
+		}
+		paginaVetor[nPaginaVetor-1] = paginaIndex;
+
+		if(paginaTabela[paginaIndex].r == 0){
+			return nPaginaVetor-1;
+		}
+		else{
+			paginaTabela[paginaIndex].r = 0;
+		}
+	} while (1);
+
 }
