@@ -2,6 +2,7 @@
   
 ####Autor:
 Lucas Hardman<br/>
+Cleo Peixoto<br/>
 
 ####Plataforma:
 Linux<br/>
