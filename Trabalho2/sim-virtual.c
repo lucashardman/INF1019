@@ -1,3 +1,10 @@
+/***********************************
+ *                                 *
+ * Cléo Peixoto - 1113657          *
+ * Pedro Hardman - 1113567         *
+ *                                 *
+ ***********************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
