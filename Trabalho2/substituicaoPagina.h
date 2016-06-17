@@ -1,3 +1,8 @@
+/***************************
+ * Lucas Hardman - 1113567 *
+ * Cleo Peixoto - 1113657  *
+ ***************************/
+
 struct paginaTabela{
 	int ultimoAcesso;
 	char r;
