@@ -1,3 +1,8 @@
+/***************************
+ * Lucas Hardman - 1113567 *
+ * Cleo Peixoto - 1113657  *
+ ***************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,8 +14,6 @@ PaginaTabela *criarPaginaTabela (int tamanho){
 
 	int paginaBits = getPaginaBits(tamanho);
 	int tamanhoTabela = pow(2, 32 - paginaBits);
-
-	printf("Entradas: %d\n", tamanhoTabela);
 
 	PaginaTabela *paginaTabela = (PaginaTabela*)malloc(tamanhoTabela*sizeof(PaginaTabela));
 	if(!paginaTabela){
