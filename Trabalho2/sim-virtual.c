@@ -1,9 +1,7 @@
-/***********************************
- *                                 *
- * Cléo Peixoto - 1113657          *
- * Pedro Hardman - 1113567         *
- *                                 *
- ***********************************/
+/***************************
+ * Lucas Hardman - 1113567 *
+ * Cleo Peixoto - 1113657  *
+ ***************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,20 +63,7 @@ void simulacao(const char* algoritmo, const char* arquivoNome, int paginaTamanho
 
 	int paginaBits = getPaginaBits(paginaTamanho);
 
-	//void (*atualiza)(PaginaTabela*, int*, int);
-	//int (*alg)(PaginaTabela*, int*, int);
-
-	if(strcmp(algoritmo, "LRU") == 0){
-		//alg = algLRU;
-	}
-	else if(strcmp(algoritmo, "NRU") == 0){
-		//atualiza = atualizaPaginas;
-		//alg = algNRU;
-	}
-	else if(strcmp(algoritmo, "SEG") == 0){
-		//alg = algSEG;
-	}
-	else{
+	if (strcmp(algoritmo, "LRU") != 0 && strcmp(algoritmo, "NRU") != 0 && strcmp(algoritmo, "SEG") != 0){
 		printf("Algoritmo invalido. Tente novamente.\n");
 		exit(0);
 	}
