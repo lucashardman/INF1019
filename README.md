@@ -7,4 +7,4 @@ Pontifica Universidade Catolica do Rio de Janeiro
 2016.1
 
 ####Descricao:
-Trabalhos da materia de Sistemas de Computacao. Trabalho1 e Trabalho2 sao dois projetos diferentes e independentes.
+Trabalhos e laboratorios da materia de Sistemas de Computacao.
