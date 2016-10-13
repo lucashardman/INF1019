@@ -1,7 +1,11 @@
-#include "escalonadores.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 //tamanho máximo do nome de programa
 #define TAM 10
@@ -9,30 +13,45 @@
 int main (void){
 
 	FILE *exec;
-	int i = 0;
 	int pid;
-	int metodoEscalonamento = 0; //1 - Prioridade - 2 - Round-robin - 3 - Lottery
+	int metodoEscalonamento = 0; //1 - Prioridade - 2 - Round-robin - 3 - Real-Time
 	int loop = 0; //Variaveis auxiliares
-	int contadorProgramas = 0; //Guarda o numero de programas em execucao
 	
-	char str1[TAM], nome[TAM]; //buffers para o "exec", o nome do programa e a prioridade
+	char str1[TAM], nome[TAM]; //buffers para o "exec" e o nome do programa
+	//buffer para a prioridade
 	int prioridade; 
+	//buffer para os tempos e duração de execução
+	int tempo, duracao;
+	//buffer para char temporário
+	char c;
 
-	ProgramaPrioridade *lstProgramasPrioridade[maximo_programas]; //Lista de programas em execucao
-	ProgramaRoundRobin *lstProgramasRoundRobin[maximo_programas]; //Lista de programas em execucao
-	ProgramaLoteria *lstProgramasLoteria[maximo_programas]; //Lista de programas em execucao
-
-	/* Inicializando Pipe */
-	FILE *pArq; 
-	if ((pArq = fopen("fifo", "w")) == NULL) { 
-		puts ("Erro ao abrir a FIFO para escrita"); 
-		return -1; 
-	} 
+	/* Inicializando FIFO, usado para comunicação entre interpretador e escalonador */
+	int fpFIFO; 
+	//se fifo não existe, cria fifo
+	if(access("fifo", F_OK) == -1)
+	{
+		if(mkfifo("fifo", S_IRUSR | S_IWUSR) != 0)
+		{
+			printf("Erro ao criar fifo UP\n");
+			return -1;
+		}
+	}
+	//fim: se fifo não existe, cria fifo
+	
+	//abre fifo para escrita
+	if((fpFIFO = open("fifo", O_WRONLY)) < 0)
+	{
+		printf("erro ao abrir fifo DOWN\n");
+		return -2;
+	}
+	//fim: abre fifo para escrita
+	
+	//FIM: Inicializando FIFO, usado para comunicação entre interpretador e escalonador
 
 
 	/* Escolha da politica de escalonamento */
 	while(loop == 0){
-		printf("Escolha a politica de escalonamento:\n1 - Por prioridade\n2 - Round-robin\n3 - Loteria\n");
+		printf("Escolha a politica de escalonamento:\n1 - Por prioridade\n2 - Round-robin\n3 - Real-Time\n");
 
 		scanf("%d", &metodoEscalonamento);
 		
@@ -54,6 +73,7 @@ int main (void){
 	 * 4 - Estrutura recebe os dados                                            *
 	 ****************************************************************************/
 
+
 	exec = fopen("entrada.txt", "r");
 
 	if (exec == NULL){
@@ -61,22 +81,13 @@ int main (void){
 		exit(0);
 	}
 	
-	/* Alocacao de memoria */
-	
-	for (loop=0; loop<maximo_programas; loop++){
-		if(metodoEscalonamento == 1)
-			lstProgramasPrioridade[loop] = (ProgramaPrioridade*) malloc (sizeof(ProgramaPrioridade) * 25);
-		if(metodoEscalonamento == 2)
-			lstProgramasRoundRobin[loop] = (ProgramaRoundRobin*) malloc (sizeof(ProgramaRoundRobin) * 25);
-		if(metodoEscalonamento == 3)
-			lstProgramasLoteria[loop] = (ProgramaLoteria*) malloc (sizeof(ProgramaLoteria) * 25);
-	}
-	/* Fim da alocacao de memoria */
+
 	
 	/* Chamada das funcoes de escalonamento */
 	
 	if(metodoEscalonamento == 1){
-		//inicia execução do escalonador
+		// PRIORIDADES
+		//inicia execução do escalonador prioridades
 		pid = fork();
 		if(pid == 0)
 		{
@@ -91,13 +102,60 @@ int main (void){
 				exit(1);
 			}
 			//imprime as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
-			fprintf(pArq,"%s %d\n", nome ,prioridade);
+			write(fpFIFO, nome, strlen(nome));
+			write(fpFIFO, &prioridade, sizeof(int)); 
 			fflush(NULL);
 			kill(pid, SIGUSR1);
 			
 			//espera 1 segundo entre envios dos programas
 			sleep(1);
 			
+			//fecha e reabre a pipe para limpá-la
+			/*
+			fclose(pArq);
+			if ((pArq = fopen("fifo", "w")) == NULL) { 
+				puts ("Erro ao abrir a FIFO para escrita"); 
+				return -1; 
+			} */
+			
+		}
+		//fputs("\n",pArq); // Finalizar arquivo
+		kill(pid, SIGUSR2); //encerra o escalonador. Se quiser que continue, comentar.
+	
+	}
+	else if(metodoEscalonamento == 2){
+		//Round Robin
+	}
+	else if(metodoEscalonamento == 3){
+		//REAL-TIME
+		//inicia execução do escalonador real-time
+		/*
+		pid = fork();
+		if(pid == 0)
+		{
+			execve("./real-time", NULL, NULL);	
+		}
+		sleep(3); //magia negra
+		
+		
+		while((fscanf(exec, "%s %s %c %c %d %c %c %d", str1, nome, &c, &c, &tempo, &c, &c, &duracao) == 8)){ 
+			if(tempo < 0 || tempo > 60){
+				printf("Arquivo corrompido. Atualize o arquivo e reinicie o programa.\nI Minimo: 0\nI Maximo: 60\n");
+				exit(1);
+			}
+			if(duracao < 0 || duracao > 60){
+				printf("Arquivo corrompido. Atualize o arquivo e reinicie o programa.\nD Minimo: 0\nD Maximo: 60\n");
+				exit(1);
+			}
+			//imprime as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
+			fprintf(pArq,"%s %d %d\n", nome , tempo, duracao);
+			fflush(NULL);
+			kill(pid, SIGUSR1);
+			
+			//espera 1 segundo entre envios dos programas
+			sleep(1);
+			
+			//fecha e reabre a pipe
 			fclose(pArq);
 			if ((pArq = fopen("fifo", "w")) == NULL) { 
 				puts ("Erro ao abrir a FIFO para escrita"); 
@@ -106,30 +164,17 @@ int main (void){
 			
 		}
 		fputs("\n",pArq); // Finalizar arquivo
-	
-	}
-	else if(metodoEscalonamento == 2){
-		//escalonamentoRoundRobin(contadorProgramas, lstProgramasRoundRobin);
-	}
-	else if(metodoEscalonamento == 3){
-		//escalonamentoLoteria(contadorProgramas, lstProgramasLoteria);
+		kill(pid, SIGUSR2); //encerra o escalonador. Se quiser que continue, comentar.
+		*/
 	}
 	else{
 		printf("Erro na chamada das funcoes de escalonamento: metodo invalido\n");
 	}
 	/* Fim: chamada das funcoes de escalonamento */
 
-	/* Limpeza de memora e encerramento de arquivos */
-	for(loop=0;loop<maximo_programas;loop++){
 
-		if(metodoEscalonamento == 1)
-			free(lstProgramasPrioridade[loop]);
-		if(metodoEscalonamento == 2)
-			free(lstProgramasRoundRobin[loop]);
-		if(metodoEscalonamento == 3)
-			free(lstProgramasLoteria[loop]);
-	}
-	fclose (pArq);
+	//fclose (pArq); //fecha o arquivo fifo
+	fclose(fpFIFO);
 	fclose(exec); //Fecha o arquivo exec.exe
 	/* Fim: Limpeza de memora e encerramento de arquivos */
 

@@ -19,16 +19,21 @@ void imprime(int signo)
 	
 	fclose (pArq); 
 	
-	//printf("asdasd\n");
 	return;
+}
+
+//função chamada para encerrar o escalonador
+void encerra(int signo)
+{
+	exit(1);
 }
 
 int main (void) { 
 	
 	signal(SIGUSR1, imprime);
-	while(1){
-		//printf("NAO\n");
-	}
+	signal(SIGUSR2, encerra);
+	
+	while(1);
 	
 	
 	return 0; 
