@@ -5,27 +5,34 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+//tamanho máximo do nome. importante ser o mesmo definido em main.c
+#define TAM 10
+
+
+int fpFIFO;
 
 void imprime(int signo)
 {
-	char ch;
-	FILE *pArq; 
-	if ((pArq = fopen("fifo", "r")) == NULL) { 
-		puts ("Erro ao abrir a FIFO para escrita"); 
-		exit(1); 
-	} 
-	
-	while ((ch = fgetc(pArq)) != EOF) putchar (ch); 
-	
-	fclose (pArq); 
-	
+	int prioridade;
+	char nome[TAM];
+
+	read(fpFIFO, nome, TAM);
+	read(fpFIFO, &prioridade, sizeof(int));
+	printf("%s %d\n", nome, prioridade);
+	fflush(stdout);
 	return;
 }
 
-//função chamada para encerrar o escalonador
+//função chamada para fechar a fifo
 void encerra(int signo)
 {
+	close(fpFIFO);
+	//provisório exit(1)
 	exit(1);
+	return;
 }
 
 int main (void) { 
@@ -33,7 +40,22 @@ int main (void) {
 	signal(SIGUSR1, imprime);
 	signal(SIGUSR2, encerra);
 	
-	while(1);
+	//se fifo existe, abre fifo para leitura
+	if(access("fifo", F_OK) == 0)
+	{
+		printf("abrindo para leitura!!!\n");
+		if((fpFIFO = open("fifo", O_RDONLY)) <= 0)
+		{
+			printf("erro ao abrir fifo\n");
+			return -2;
+		}
+		printf("leitura aberta\n");
+	}
+	//FIM: se fifo existe, abre fifo para leitura
+	
+	
+	
+	while(1);	
 	
 	
 	return 0; 
