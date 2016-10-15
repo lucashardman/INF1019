@@ -29,7 +29,6 @@ int main (void){
 	//se fifo não existe, cria fifo
 	if(access("fifo", F_OK) == -1)
 	{
-		printf("criando fifo\n");
 		if(mkfifo("fifo", S_IRUSR | S_IWUSR) != 0)
 		{
 			printf("Erro ao criar fifo\n");
@@ -38,6 +37,8 @@ int main (void){
 	}
 	//FIM: se fifo não existe, cria fifo
 
+
+//AFAZER: alterar saída padrão para arquivo
 
 	/* Escolha da politica de escalonamento */
 	while(loop == 0){
@@ -86,7 +87,6 @@ int main (void){
 		}
 		
 		//abre fifo para escrita
-		printf("abrindo para escrita\n");
 		
 		if((fpFIFO = open("fifo", O_WRONLY)) < 0)
 		{
@@ -111,17 +111,14 @@ int main (void){
 				exit(1);
 			}
 			//manda as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
-			printf("escrevendo na fifo\n");
 			write(fpFIFO, nome, TAM);
 			write(fpFIFO, &prioridade, sizeof(int)); 
 			fflush(NULL);
-			printf("enviando sinal\n");
 			kill(pid, SIGUSR1);
 			
 			//espera 1 segundo entre envios dos programas
 			sleep(1);			
 		}
-		
 		kill(pid, SIGUSR2); //Fecha a fifo no lado do escalonador, sem interromper sua execução.
 	
 	}
@@ -131,12 +128,24 @@ int main (void){
 	else if(metodoEscalonamento == 3){
 		//REAL-TIME
 		//inicia execução do escalonador real-time
-		/*
+		
 		pid = fork();
 		if(pid == 0)
 		{
 			execve("./real-time", NULL, NULL);	
 		}
+		
+		
+		//abre fifo para escrita
+		
+		if((fpFIFO = open("fifo", O_WRONLY)) < 0)
+		{
+			printf("erro ao abrir fifo.\n");
+			return -2;
+		}
+		
+		//fim: abre fifo para escrita
+		
 		sleep(3); //magia negra
 		
 		
@@ -149,35 +158,38 @@ int main (void){
 				printf("Arquivo corrompido. Atualize o arquivo e reinicie o programa.\nD Minimo: 0\nD Maximo: 60\n");
 				exit(1);
 			}
-			//imprime as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
-			fprintf(pArq,"%s %d %d\n", nome , tempo, duracao);
+			
+			//manda as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
+			
+			write(fpFIFO, nome, TAM);
+			write(fpFIFO, &tempo, sizeof(int)); 
+			write(fpFIFO, &duracao, sizeof(int)); 
 			fflush(NULL);
 			kill(pid, SIGUSR1);
 			
+			
 			//espera 1 segundo entre envios dos programas
+			
 			sleep(1);
 			
-			//fecha e reabre a pipe
-			fclose(pArq);
-			if ((pArq = fopen("fifo", "w")) == NULL) { 
-				puts ("Erro ao abrir a FIFO para escrita"); 
-				return -1; 
-			} 
 			
 		}
-		fputs("\n",pArq); // Finalizar arquivo
-		kill(pid, SIGUSR2); //encerra o escalonador. Se quiser que continue, comentar.
-		*/
+		printf("aqui!!!\n");
+		kill(pid, SIGUSR2); //Fecha a fifo no lado do escalonador, sem interromper sua execução.
+		
 	}
 	else{
 		printf("Erro na chamada das funcoes de escalonamento: metodo invalido\n");
 	}
 	/* Fim: chamada das funcoes de escalonamento */
-
-
-	close(fpFIFO); //fecha a fifo
+	
+	close(fpFIFO); //fecha a fifo. 
+	
 	fclose(exec); //Fecha o arquivo exec.exe
 	/* Fim: Limpeza de memora e encerramento de arquivos */
-
-	return 0;
+	
+	printf("encerrando main\n");
+	//AFAZER: solucionar problema de terminar main terminar escalonador.
+	while(1);
+	return 0; //tá encerrando o processo filho???
 }

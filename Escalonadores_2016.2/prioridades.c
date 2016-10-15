@@ -28,7 +28,7 @@ void imprime(int signo)
 
 //função chamada para fechar a fifo
 void encerra(int signo)
-{
+{	
 	close(fpFIFO);
 	//provisório exit(1)
 	exit(1);
@@ -43,19 +43,19 @@ int main (void) {
 	//se fifo existe, abre fifo para leitura
 	if(access("fifo", F_OK) == 0)
 	{
-		printf("abrindo para leitura!!!\n");
 		if((fpFIFO = open("fifo", O_RDONLY)) <= 0)
 		{
 			printf("erro ao abrir fifo\n");
 			return -2;
 		}
-		printf("leitura aberta\n");
 	}
 	//FIM: se fifo existe, abre fifo para leitura
 	
 	
-	
-	while(1);	
+	while(1)
+	{
+		
+	}	
 	
 	
 	return 0; 
