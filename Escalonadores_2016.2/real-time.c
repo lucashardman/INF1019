@@ -24,8 +24,6 @@ typedef struct programa
 	int I;
 	//duração da execução de um programa
 	int D;
-	//true se já encerrou, false se não
-	bool terminado;
 } Programa;
 
 //vetor de programas a serem administrados e quantidade
@@ -43,11 +41,9 @@ int fpFIFO;
 //função que recebe as informações sobre um programa e, se possível, o adiciona a lista de execução. Supoe 0 < I/D < 60
 void adiciona(int signo)
 {
-	char nome[TAM];
+	char nome[TAM], chamada[TAM+2] = "./";
 	int I, D, pid;
 	int i;
-	
-	printf("lendo fifo\n");
 	
 	read(fpFIFO, nome, TAM);
 	read(fpFIFO, &I, sizeof(int));
@@ -81,7 +77,6 @@ void adiciona(int signo)
 	//lista[qtd] = (Programa) malloc(sizeof(Programa));
 	lista[qtd].I = I;
 	lista[qtd].D = D;
-	lista[qtd].terminado = false;
 	strcpy(lista[qtd].nome, nome);
 	
 	//vetor programação
@@ -92,6 +87,7 @@ void adiciona(int signo)
 		
 	}	
 	
+	strcat(chamada, nome);
 	
 	//inicia execução do programa e o interrompe
 	
@@ -102,41 +98,73 @@ void adiciona(int signo)
 	}
 	if(pid == 0)
 	{
-		printf("fork: %d\n", getpid());
-		execve("./programa1", NULL, NULL);
+		
+		execve(chamada, NULL, NULL);
 	}
 	else
 	{
 		lista[qtd].pid = pid;
 	}	
 	
-	kill(lista[qtd].pid, SIGSTOP);	
+	kill(pid, SIGSTOP);	
 	
 	qtd++;
-	
-	printf("aqui!\n");
 			
 	return;
 }
 
-//função chamada para encerrar o escalonador
+//função chamada para fechar a fifo para leitura, chamada através de um sinal do interpretador quando não há mais programas a serem escalonados
 void encerra(int signo)
 {
-	printf("fechando fifo\n");
 	close(fpFIFO);
-	printf("fifo fechada\n");
+	return;
+}
+
+//função usada para remover um programa encerrado da lista de execução, liberando seu tempo de uso. recebe p que é a posição do programa no vetor de programas
+void trata_fim(int p)
+{
+	int i;
+	
+	//remove p do vetor programação, e decrementa os outros programas de acordo
+
+	for(i = 0; i < 60; i++)
+	{
+		if(programacao[i] == p)
+		{
+			programacao[i] = -1;
+		}
+		else if(programacao[i] > p)
+		{
+			programacao[i] = programacao[i] - 1;
+		}
+	}
+	
+	//realoca lista sem o programa
+	for(i = p; i < qtd - 1;i++)
+	{
+		lista[i] = lista[i+1];
+	}
+	
+	lista = (Programa*) realloc(lista, (qtd-1)*sizeof(Programa));
+
+	// FIM: realoca lista sem o programa
+	
+	qtd--;
+	
 	return;
 }
 
 int main (void) { 
 	
-	int i;
+	int i, fd;
+	int retwait;
+	int status; //usado para obter status de programas através de waitpids
 	int corrente; //o programa sendo executado no momento. -1 se não há.
 	time_t s; // o segundo corrente em cada loop
 	time_t inicio; //o segundo em que o escalonador começa sua execução
 	
 	signal(SIGUSR1, adiciona);
-	if((signal(SIGUSR2, encerra)) == SIG_ERR) printf("erro na signal\n");
+	signal(SIGUSR2, encerra);
 	
 	for(i = 0; i < 60; i++)
 	{
@@ -155,16 +183,39 @@ int main (void) {
 	}
 	//FIM: se fifo existe, abre fifo para leitura
 	
+	//altera saída padrão
+	fd = open("saida.txt",O_CREAT|O_RDWR|O_TRUNC,0666);
+	
+	dup2(fd, 1);
 	
 	corrente = -1;
 	inicio = time(NULL);
-	//AFAZER: tratar fim de programas
+	
 	while(1)
 	{
 		
+		if((time(NULL) - inicio) > 60 && lista == NULL) break;
 		s = (time(NULL) - inicio)%60;
-		printf("%d %d \n", s, programacao[s]);
 		
+		if(corrente != -1 && corrente != programacao[s])
+		//se no segundo um programa está executando, mas não deveria
+		{
+			//se o programa encerrou por si próprio, trata isso
+			//essa detecção tá dando ruim
+			retwait = waitpid(lista[corrente].pid, &status, WNOHANG);
+			if(retwait != 0 && WIFEXITED(status))
+			{
+				trata_fim(corrente);
+				corrente = -1;
+			}
+			else
+			{
+				//pára o programa
+				kill(lista[corrente].pid, SIGSTOP);
+				corrente = -1;
+			}
+		}
+	
 		if(programacao[s] >= 0 && programacao[s] != corrente)
 		//se um programa deveria estar sendo executado, mas não está, 
 		{
@@ -172,17 +223,24 @@ int main (void) {
 			if(s >= lista[programacao[s]].I && s < (lista[programacao[s]].I + lista[programacao[s]].D))
 			//redundância. se não coincidir, continue
 			{
+				
 				if(corrente >= 0)
 				//se já havia um programa em execução, o interrompe
 				{
 					kill(lista[corrente].pid, SIGSTOP);
-				}
+				}		
+				
+						
 				//começa execução do novo programa corrente
-				printf("começando execução de programa %d \n", lista[programacao[s]].pid);
+				
+				
+				//prossegue execução do programa
+				
 				kill(lista[programacao[s]].pid, SIGCONT);
 				corrente = programacao[s];
 				//dorme até próximo do fim do tempo do programa
-				//sleep(lista[programacao[s]].D - 1);
+				sleep(lista[programacao[s]].D - 1);
+			
 			}
 			else
 			{
@@ -191,25 +249,12 @@ int main (void) {
 			}
 		}
 		else
-		//
 		{
-			if(programacao[s] == -1 && corrente >= 0)
-			//se o segundo deveria estar livre mas há um programa executando,
-			{
-				//pára o programa
-				printf("parando %d\n", lista[corrente].pid);
-				kill(lista[corrente].pid, SIGSTOP);
-				corrente = -1;
-			}
-			else
-			{
-				sleep(1);
-				continue;
-			}
-		}
-		
+			sleep(1);
+			continue;
+		}			
 	
 	}
-	
+	close(fd);
 	return 0; 
 } 
