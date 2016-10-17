@@ -127,7 +127,46 @@ int main (void){
 	
 	}
 	else if(metodoEscalonamento == 2){
-		//Round Robin
+		// ROUND-ROBIN
+
+		sprintf(strPid, "%d", getpid());
+
+		//Passando o pid atraves do argv para matar o processo pai no final
+		argv[0]="./round-robin";
+		argv[1]=strPid;
+		argv[2]=NULL;
+
+		//inicia execução do escalonador prioridades
+		pid = fork();
+		if(pid == 0)
+		{
+			execve("./round-robin", argv, NULL);	
+		}
+		
+		//abre fifo para escrita
+		
+		if((fpFIFO = open("fifo", O_WRONLY)) < 0)
+		{
+			printf("erro ao abrir fifo.\n");
+			return -2;
+		}
+		
+		//fim: abre fifo para escrita
+		
+		sleep(3); //magia negra
+
+	
+		while((fscanf(exec, "%s %s", str1, nome) == 2))
+		{ 	
+			
+			//manda as informações necessárias, a avisa o escalonador através de um sinal que há novos programas
+			write(fpFIFO, nome, TAM); 
+			fflush(NULL);
+			kill(pid, SIGUSR1);
+			//espera 1 segundo entre envios dos programas
+			sleep(1);			
+		}
+		kill(pid, SIGUSR2); //Fecha a fifo no lado do escalonador, sem interromper sua execução.
 	}
 	else if(metodoEscalonamento == 3){
 		//REAL-TIME
