@@ -16,7 +16,8 @@ int main (void){
 	int pid;
 	int metodoEscalonamento = 0; //1 - Prioridade - 2 - Round-robin - 3 - Real-Time
 	int loop = 0; //Variaveis auxiliares
-	
+	char strPid[TAM];
+	char *argv[3];
 	char str1[TAM], nome[TAM]; //buffers para o "exec" e o nome do programa
 	//buffer para a prioridade
 	int prioridade; 
@@ -78,12 +79,19 @@ int main (void){
 	
 	if(metodoEscalonamento == 1){
 		// PRIORIDADES
-		
+
+		sprintf(strPid, "%d", getpid());
+
+		//Passando o pid atraves do argv para matar o processo pai no final
+		argv[0]="./Prioridades";
+		argv[1]=strPid;
+		argv[2]=NULL;
+
 		//inicia execução do escalonador prioridades
 		pid = fork();
 		if(pid == 0)
 		{
-			execve("./prioridades", NULL, NULL);	
+			execve("./prioridades", argv, NULL);	
 		}
 		
 		//abre fifo para escrita
@@ -97,14 +105,10 @@ int main (void){
 		//fim: abre fifo para escrita
 		
 		sleep(3); //magia negra
-		
-		
-		
-		
-		
-		
+
+	
 		while((fscanf(exec, "%s %s %d", str1, nome, &prioridade) == 3))
-		{ 
+		{ 	
 			
 			if(prioridade < 1 || prioridade > 7){
 				printf("Arquivo corrompido. Atualize o arquivo e reinicie o programa.\nPrioridade Minima: 1\nPrioridade Maxima: 7\n");
@@ -188,8 +192,10 @@ int main (void){
 	fclose(exec); //Fecha o arquivo exec.exe
 	/* Fim: Limpeza de memora e encerramento de arquivos */
 	
-	printf("encerrando main\n");
+	//printf("encerrando main\n");
 	//AFAZER: solucionar problema de terminar main terminar escalonador.
-	while(1);
+	while(1){
+
+	}
 	return 0; //tá encerrando o processo filho???
 }

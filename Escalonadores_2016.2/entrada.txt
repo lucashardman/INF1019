@@ -1,5 +1,5 @@
-Exec programa1 I=10 D=5
-Exec programa3 I=20 D=5
-Exec programa2 I=30 D=5
-Exec programa4 I=40 D=5
-Exec programa5 I=50 D=5
+Exec programa1 7
+Exec programa3 2
+Exec programa2 5
+Exec programa4 1
+Exec programa5 6
