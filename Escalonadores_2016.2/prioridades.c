@@ -114,7 +114,7 @@ int main (int argc, char *argv[]) {
 				}
 				if(terminado == qtd){//Se todos programas terminaram, termina.
 					printf("--> Todos os programas terminaram.\n");
-					kill(pidPai, SIGUSR1);
+					kill(pidPai, SIGUSR2);
 					return 0;
 				}
 				terminado = 0;
@@ -125,6 +125,11 @@ int main (int argc, char *argv[]) {
 				fflush(stdout);
 				sleep(3); // O programa executa por 3 segundos.
 				kill(lista[j].pid, SIGSTOP); // O programa passa a vez. Entra em estado de espera.
+				
+				if(reinicia == true){	// Break para quando acabar a fatia de tempo, o programa de prioridade maior que entrou comecar.
+					i=0;
+					break;
+				}
 			}
 			j++;
 			if(j==qtd){

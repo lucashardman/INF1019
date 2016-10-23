@@ -22,8 +22,6 @@ typedef struct programa
 {
 	//nome do programa
 	char nome[TAM];
-	//prioridade do programa
-	int prioridade;
 	//pid do programa
 	int pid;
 	//true se o programa estiver terminado
@@ -65,8 +63,6 @@ int main (int argc, char *argv[]) {
 			kill(lista[loop].pid, SIGSTOP);
 		}
 
-		sleep(3);
-		
 		fflush(stdout);	
 		
 		i=0;
@@ -87,8 +83,7 @@ int main (int argc, char *argv[]) {
 
 				if(terminado == qtd){//Se todos programas terminaram, termina.
 					printf("--> Todos os programas terminaram.\n");
-					//kill(pidPai, SIGKILL); //Mata o processo pai.
-					kill(pidPai, SIGUSR1);
+					kill(pidPai, SIGUSR2);
 					return 0;
 				}
 
@@ -98,7 +93,8 @@ int main (int argc, char *argv[]) {
 				sleep(1);
 				kill(lista[i].pid, SIGCONT); // O programa eh escalonado. Entra em estado de execucao.
 				fflush(stdout);
-				sleep(3); // O programa executa por 3 segundos.
+				sleep(3); // Fatia de tempo de 3 segundos.
+				//usleep(500); // Fatia de tempo de 0.5 segundos.
 				kill(lista[i].pid, SIGSTOP); // O programa passa a vez. Entra em estado de espera.
 			}
 			i++;
@@ -130,7 +126,6 @@ void carrega_programa(int signo){
 		printf("Erro de alocação de memória\n");
 		exit(1);
 	}
-	lista[qtd].prioridade = prioridade;
 
 	pid = fork();
 

@@ -10,6 +10,11 @@
 //tamanho máximo do nome de programa
 #define TAM 10
 
+void termina_interpretador(int signo){
+	printf("Fim do escalonamento.\n\n");
+	exit(0);
+}
+
 int main (void){
 
 	FILE *exec;
@@ -37,7 +42,7 @@ int main (void){
 		}
 	}
 	//FIM: se fifo não existe, cria fifo
-
+	signal(SIGUSR2, termina_interpretador);
 
 //AFAZER: alterar saída padrão para arquivo
 
