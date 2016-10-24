@@ -54,7 +54,6 @@ Real-time:
 > Segundo de inicio
 > Tempo de duracao
 > Pid
-> Booleano se terminou ou nao
 
 Apos alocar as informacoes na struct, o handler inicia o processo atraves da funcao execve e logo depois o coloca em estado de espera atraves do signal SIGSTOP.
 
@@ -77,7 +76,7 @@ No escalonamento round-robin todos os programas possuem a mesma fatia de tempo p
 ****
 Escalonamento real-time:
 
-O escalonamento real-time se baseia num vetor de sessenta posições, uma cada para cada segundo no minuto, e num loop que verifica através desse vetor qual programa deve estar sendo executado no momento. Quando um programaé enviado ao escalonador, ele verifica se intervalo de tempo desejado já está tomado. Se não, o programa é adicionado ao vetor. Quando o escalonador percebe que um programa terminou sua execução, suas posições no vetor são libertas para uso por outros programas.
+O escalonamento real-time se baseia num vetor de sessenta posições, uma cada para cada segundo no minuto, e num loop que verifica através desse vetor qual programa deve estar sendo executado no momento. Quando um programa é enviado ao escalonador, ele verifica se intervalo de tempo desejado já está tomado. Se não, o programa é adicionado ao vetor. Quando o escalonador percebe que um programa terminou sua execução, suas posições no vetor são libertas para uso por outros programas.
 
 --> Testes:
 
@@ -169,5 +168,63 @@ Exec programa5 I=10 D=10
 Exec programa4 I=50 D=20
 
 Ordem de execucao determinada pelo escalonador (levando em conta que todos os programas ja esta carregados, ou seja, lidos do entrada.txt pelo interpretador, executados e coloca-dos em estado de espera):
+obs: reparar que programa4 I=50 D=20 e programa5 I=10 D=10 não serão escalonados por terem parâmetros incompatíveis ou já utilizados por outro programa. 
 
-programa2
+
+começando programa2
+Este programa dura 20 segundos.
+Programa2 rodando. Faltam 19 segundos.
+Programa2 rodando. Faltam 18 segundos.
+Programa2 rodando. Faltam 17 segundos.
+interrompendo programa2
+começando programa1
+Este programa dura 15 segundos.
+Programa1 rodando. Faltam 14 segundos.
+Programa1 rodando. Faltam 13 segundos.
+Programa1 rodando. Faltam 12 segundos.
+Programa1 rodando. Faltam 11 segundos.
+Programa1 rodando. Faltam 10 segundos.
+Programa1 rodando. Faltam 9 segundos.
+Programa1 rodando. Faltam 8 segundos.
+Programa1 rodando. Faltam 7 segundos.
+Programa1 rodando. Faltam 6 segundos.
+Programa1 rodando. Faltam 5 segundos.
+Programa1 rodando. Faltam 4 segundos.
+Programa1 rodando. Faltam 3 segundos.
+Programa1 rodando. Faltam 2 segundos.
+Programa1 rodando. Faltam 1 segundos.
+Programa1 finalizado.
+programa terminou
+começando programa3
+interrompendo programa3
+começando programa4
+interrompendo programa4
+começando programa2
+Programa2 rodando. Faltam 16 segundos.
+Programa2 rodando. Faltam 15 segundos.
+Programa2 rodando. Faltam 14 segundos.
+Programa2 rodando. Faltam 13 segundos.
+Programa2 rodando. Faltam 12 segundos.
+Programa2 rodando. Faltam 11 segundos.
+Programa2 rodando. Faltam 10 segundos.
+interrompendo programa2
+começando programa3
+programa terminou
+começando programa4
+programa terminou
+começando programa2
+Programa2 rodando. Faltam 9 segundos.
+Programa2 rodando. Faltam 8 segundos.
+Programa2 rodando. Faltam 7 segundos.
+Programa2 rodando. Faltam 6 segundos.
+Programa2 rodando. Faltam 5 segundos.
+Programa2 rodando. Faltam 4 segundos.
+Programa2 rodando. Faltam 3 segundos.
+interrompendo programa2
+começando programa2
+Programa2 rodando. Faltam 2 segundos.
+Programa2 rodando. Faltam 1 segundos.
+Programa2 finalizado.
+programa terminou
+Fim do escalonamento.
+
