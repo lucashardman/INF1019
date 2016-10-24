@@ -7,16 +7,16 @@
 int main (void){
 
 	int tempo = 14;
-
 	printf("Este programa dura %d segundos.\n", tempo+1);
-
+	fflush(stdout);
 	while(tempo > 0){
 		printf("Programa1 rodando. Faltam %d segundos.\n", tempo);
+		fflush(stdout);
 		sleep(1);
 		tempo--;
 	}
-	
 	printf("Programa1 finalizado.\n");
-
+	fflush(stdout);
+	
 	return 0;
 }

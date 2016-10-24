@@ -36,7 +36,7 @@ void carrega_programa(int signo);
 void encerra(int signo);
 
 int main (int argc, char *argv[]) {
-	int pid = 0, pidPai=0, status;
+	int pid = 0, pidPai=0, status, fd;
 	int loop = 0, i=0, j=0;
 	int ordem[MAX_PROG];
 
@@ -45,6 +45,12 @@ int main (int argc, char *argv[]) {
 
 	signal(SIGUSR1, carrega_programa);
 	signal(SIGUSR2, encerra);
+
+	if ((fd=open("saida.txt",O_RDWR|O_CREAT|O_TRUNC,0666)) == -1){
+		perror("Error open()");
+		return -1;
+	}
+	dup2(fd, 1);	
 
 	//se fifo existe, abre fifo para leitura
 	if(access("fifo", F_OK) == 0)
@@ -94,7 +100,6 @@ int main (int argc, char *argv[]) {
 				kill(lista[i].pid, SIGCONT); // O programa eh escalonado. Entra em estado de execucao.
 				fflush(stdout);
 				sleep(3); // Fatia de tempo de 3 segundos.
-				//usleep(500); // Fatia de tempo de 0.5 segundos.
 				kill(lista[i].pid, SIGSTOP); // O programa passa a vez. Entra em estado de espera.
 			}
 			i++;

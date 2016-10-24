@@ -1,0 +1,87 @@
+Programa ./programa1 de PID 13616 e prioridade 7 carregado.
+Programa ./programa2 de PID 13617 e prioridade 2 carregado.
+Escalonando 1 programas de prioridade 2
+./programa2 de prioridade 2 vai recomecar.
+Programa ./programa3 de PID 13621 e prioridade 2 carregado.
+Este programa dura 20 segundos.
+Programa2 rodando. Faltam 19 segundos.
+Programa ./programa4 de PID 13623 e prioridade 1 carregado.
+Programa ./programa5 de PID 13625 e prioridade 6 carregado.
+Escalonando 1 programas de prioridade 1
+./programa4 de prioridade 1 vai recomecar.
+Escalonando 1 programas de prioridade 1
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+./programa4 de prioridade 1 vai recomecar.
+--> Programa ./programa4 terminado
+Escalonando 2 programas de prioridade 2
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 18 segundos.
+Programa2 rodando. Faltam 17 segundos.
+Programa2 rodando. Faltam 16 segundos.
+./programa3 de prioridade 2 vai recomecar.
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 15 segundos.
+Programa2 rodando. Faltam 14 segundos.
+Programa2 rodando. Faltam 13 segundos.
+./programa3 de prioridade 2 vai recomecar.
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 12 segundos.
+Programa2 rodando. Faltam 11 segundos.
+Programa2 rodando. Faltam 10 segundos.
+./programa3 de prioridade 2 vai recomecar.
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 9 segundos.
+Programa2 rodando. Faltam 8 segundos.
+Programa2 rodando. Faltam 7 segundos.
+./programa3 de prioridade 2 vai recomecar.
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 6 segundos.
+Programa2 rodando. Faltam 5 segundos.
+Programa2 rodando. Faltam 4 segundos.
+./programa3 de prioridade 2 vai recomecar.
+--> Programa ./programa3 terminado
+./programa2 de prioridade 2 vai recomecar.
+Programa2 rodando. Faltam 3 segundos.
+Programa2 rodando. Faltam 2 segundos.
+Programa2 rodando. Faltam 1 segundos.
+./programa2 de prioridade 2 vai recomecar.
+Programa2 finalizado.
+./programa2 de prioridade 2 vai recomecar.
+--> Programa ./programa2 terminado
+Escalonando 1 programas de prioridade 6
+./programa5 de prioridade 6 vai recomecar.
+./programa5 de prioridade 6 vai recomecar.
+./programa5 de prioridade 6 vai recomecar.
+--> Programa ./programa5 terminado
+Escalonando 1 programas de prioridade 7
+./programa1 de prioridade 7 vai recomecar.
+Este programa dura 15 segundos.
+Programa1 rodando. Faltam 14 segundos.
+Programa1 rodando. Faltam 13 segundos.
+Programa1 rodando. Faltam 12 segundos.
+./programa1 de prioridade 7 vai recomecar.
+Programa1 rodando. Faltam 11 segundos.
+Programa1 rodando. Faltam 10 segundos.
+Programa1 rodando. Faltam 9 segundos.
+./programa1 de prioridade 7 vai recomecar.
+Programa1 rodando. Faltam 8 segundos.
+Programa1 rodando. Faltam 7 segundos.
+Programa1 rodando. Faltam 6 segundos.
+./programa1 de prioridade 7 vai recomecar.
+Programa1 rodando. Faltam 5 segundos.
+Programa1 rodando. Faltam 4 segundos.
+Programa1 rodando. Faltam 3 segundos.
+./programa1 de prioridade 7 vai recomecar.
+Programa1 rodando. Faltam 2 segundos.
+Programa1 rodando. Faltam 1 segundos.
+Programa1 finalizado.
+./programa1 de prioridade 7 vai recomecar.
+--> Programa ./programa1 terminado
+--> Todos os programas terminaram.
