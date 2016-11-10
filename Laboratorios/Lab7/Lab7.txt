@@ -1,0 +1,232 @@
+Exercicio 1: Abra duas seções de terminais 
+
+a) Na primeira, execute um programa que fica em 
+loop lendo de uma FIFO para depois escrever na 
+saída padrão (tela) 
+
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#define OPENMODE (O_RDONLY)
+#define FIFO "meufifo"
+
+int main (void) { 
+
+	int fpFIFO; 
+	char ch; 
+
+	if(access(FIFO, F_OK) == -1){
+		if(mkfifo(FIFO, S_IRUSR | S_IWUSR) != 0){
+			printf("Erro ao criar a FIFO.\n");
+			return -1;
+		}
+	}
+	puts("Abrindo FIFO\n");
+
+	if((fpFIFO = open(FIFO, OPENMODE))<0){
+		printf("Erro ao abrir a FIFO.\n");
+		return -2;
+	}
+	
+	puts("Começando a ler...\n");
+	
+	while (read(fpFIFO, &ch, sizeof(ch))>0){
+		putchar(ch);
+		if(ch == '0')
+			break;
+	}
+	puts("\nFim da leitura.\n");
+	close(fpFIFO);
+	return 0;
+} 
+
+b) Na segunda, execute um programa que fica lendo 
+da entrada padrão (teclado) e depois escreve na 
+mesma FIFO 
+
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#define OPENMODE (O_WRONLY)
+#define FIFO "meufifo"
+
+int main (void) 
+{ 
+	char input;
+	int fpFIFO;
+	
+	if(access(FIFO, F_OK) == -1){
+		if(mkfifo(FIFO, S_IRUSR | S_IWUSR) != 0){
+			printf("Erro ao criar a FIFO.\n");
+			return -1;
+		}
+	}
+	puts("Abrindo FIFO\n");
+	
+	if((fpFIFO = open(FIFO, OPENMODE))<0){
+		printf("Erro ao abrir a FIFO.\n");
+		return -2;
+	}
+	
+	puts("Começando a escrever...\n");
+	
+	printf("Digite uma mensagem (digite 0 para terminar): \n");
+	
+	while(input != '0'){
+	
+		scanf("%c", &input);
+		
+		write(fpFIFO, &input, sizeof(input));  
+		
+		
+	}	
+	
+	puts("Fim da escrita.\n");
+	close (fpFIFO); 
+	return 0; 
+} 
+
+Compilação e execução :
+gcc exercicio1read.c -o exercicio1read
+gcc exercicio1write.c -o exercicio1write
+
+terminal 1:
+./exercicio1read
+Abrindo FIFO
+
+Começando a ler... #####OBS: nesse ponto ele começa a esperar mensagens no terminal 2,
+ou seja, espera que o processo exercicio1write mande mensagem pela fifo.
+
+oi
+nao
+sei
+se 
+ta certo
+0
+Fim da leitura.
+
+
+terminal 2:
+./exercicio1write
+Abrindo FIFO
+
+Começando a escrever...
+
+Digite uma mensagem (digite 0 para terminar): 
+oi
+nao
+sei
+se 
+ta certo 
+0
+Fim da escrita.
+
+Explicação:
+No processo de exercicio1write.c o programa le informações do teclado e 
+escreve na fifo através da função write. O processo de exercicio2write.c lê
+essa fifo através da funcao read e escreve ela na tela do terminal.
+
+2. Escreva um programa que primeiro cria uma FIFO e em seguida cria dois processos filho
+que escrevem uma string na FIFO. O pai dá um waitpid em seguida lê as strings desse FIFO e exibe na tela.
+
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#define WRITEMODE (O_WRONLY)
+#define READMODE (O_RDONLY | O_NONBLOCK)
+#define FIFO "minhaFifo"
+
+int main (void) { 
+	int fpFIFO, status;
+	char msg[] = "Mensagem!!\n";
+	char ch;
+	pid_t pid1, pid2;
+	
+	if (access(FIFO, F_OK) == -1) {
+		if (mkfifo(FIFO, S_IRUSR | S_IWUSR) != 0)
+			fprintf	(stderr, "Erro na criação da FIFO %s\n", FIFO);
+			return -1; 
+	}
+
+	// criando processos :
+	else {
+		if (fork() != 0) {
+			if (fork() != 0) { //pai
+
+				puts ("Abrindo FIFO pai");	// FIFO pai criada
+				if ((fpFIFO = open (FIFO, READMODE)) < 0) {
+					fprintf(stderr, "Erro ao abrir a FIFO %s\n", FIFO);
+					return -2;
+				}
+
+				waitpid(-1, &status, 0); 
+				waitpid(-1, &status, 0); 
+
+				puts ("Começando a ler...");
+				while (read (fpFIFO, &ch, sizeof(ch)) > 0)
+					putchar (ch);
+				return 0;
+			}
+			else { // filho 1
+				puts ("Abrindo FIFO filho 1");	// FIFO criada
+				if ((fpFIFO = open (FIFO, WRITEMODE)) < 0) {
+					fprintf(stderr, "Erro ao abrir a FIFO %s\n", FIFO);
+					return -1;
+				}
+				puts ("Começando a escrever...");
+				write(fpFIFO, msg, strlen(msg));
+				puts("Fim da escrita");
+				return 0;
+			}
+		}
+		else { // filho2
+			puts ("Abrindo FIFO filho 2");	// FIFO criada
+			if ((fpFIFO = open (FIFO, WRITEMODE)) < 0) {
+				fprintf(stderr, "Erro ao abrir a FIFO %s\n", FIFO);
+				return -3;
+			}
+			puts ("Começando a escrever...");
+			write(fpFIFO, msg, strlen(msg));
+			return 0;
+		}
+		close(fpFIFO);
+		return 0;
+	}
+
+	exit(status);
+}
+
+Compilação e execução:
+gcc exercicio2.c -o exercicio2
+./exercicio2
+Abrindo FIFO pai
+Abrindo FIFO filho 2
+Começando a escrever...
+Abrindo FIFO filho 1
+Começando a escrever...
+Fim da escrita
+Começando a ler...
+Mensagem!!!
+Mensagem!!!
+
+Explicação:
+
+O programa cria primeiro o processo pai, cria a FIFO relacionada a ele e espera os 2 filhos utilizando "waitpid". Em seguida cada filho escreve em sua FIFO, respectiva a eles. Depois o processo pai lê a fifo, colocando na string "ch".
+
+
