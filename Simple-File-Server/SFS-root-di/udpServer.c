@@ -12,7 +12,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/stat.h>
 
 #define BUFSIZE 1024
 
@@ -24,102 +23,11 @@ void error(char *msg) {
   exit(1);
 }
 
-//função parser que interpreta o comando recebido em buf e o interpreta de acordo
-int parse_buff (char *buf, int n, int *cmd, char *name) {
-    char *cmdstr, *cmdstr2;
-    struct stat st;
+int parse_buff (char *buff, int n, int *cmd, char *name) {
+    char *cmdstr;
     
-    cmdstr = (char*) malloc(BUFSIZE * sizeof(char));
-    cmdstr2 = (char*) malloc(BUFSIZE * sizeof(char));
-    
-    cmdstr = strtok(buf,", ");
-    
-    
-	//RD-­‐REQ,path(string),strlen(int),payload(stringvazio),nrbytes(int),offset(int)
-	//lê nrbytes do arquivo path a partir da posição offset
-	if (strcmp(cmdstr, "RD-REQ") == 0)
-	{
-		
-		
-	}
-	
-	
-	//WR-­-REQ,path(string),strlen(int),payload(string),nrbytes(int),offset(int)
-	//escreve nrbytes do conteúdo de payload no arquivo path a partir da posição offset
-	else if (strcmp(cmdstr, "WR-REQ") == 0)
-	{
-		
-	}
-
-	
-	
-	else if (strcmp(cmdstr, "FI-REQ") == 0)
-	{
-		
-	}
-	
-	//DC-­‐REQ,path(string),strlen(int), dirname(string),strlen(int)
-	//cria um novo subdiretório dirname em path
-	else if (strcmp(cmdstr, "DC-REQ") == 0)
-	{
-		//path
-		cmdstr = strtok(NULL,", ");
-		//strlen
-		cmdstr2 = strtok(NULL,", ");
-		//dirname
-		cmdstr2 = strtok(NULL,", ");
-		
-		//cmdstr = full path
-		strcat(cmdstr, cmdstr2);
-		
-		printf("cmdstr: %s\n, cmdstr2: %s\n", cmdstr, cmdstr2);
-		
-		
-		
-		//cria novo diretório em path se diretório já não existe
-		if (stat(cmdstr, &st) == -1)
-		{
-			printf("cria\n");
-			mkdir(cmdstr, 0700);
-			
-			//buf  = DC-­‐REP,path(string),strlen(int)       
-			strcpy(buf, "DC-REP, ");
-			strcat(buf, cmdstr);
-			strcat(buf, ", ");
-			//strcat(buf, itoa(strlen(cmdstr), cmdstr2, 10));
-			sprintf(buf, "%s, %d", buf, strlen(cmdstr));
-		}
-		else
-		{
-			printf("não cria")
-			//buf  = DC-­‐REP,path(string),strlen(int)       
-			strcpy(buf, "DC-REP, ");
-			strcat(buf, ", ");
-			sprintf(buf, "%s, %d", buf, 0);
-		}
-		
-		
-		
-	}
-	
-	else if (strcmp(cmdstr, "DR-REQ") == 0)
-	{
-		
-	}
-	
-	else if (strcmp(cmdstr, "DL-REQ") == 0)
-	{
-		
-	}
-
-	else 
-	{
-		printf("ERRO. Comando não reconhecido.\n");
-		
-	}
-    printf("%s\n", cmdstr);
-    
-    name = strtok(NULL,"\0");
+    cmdstr = strtok(buff," ");
+        name = strtok(NULL,"\0");
     *cmd = atoi(cmdstr);
     return 0;
 }
