@@ -16,6 +16,18 @@
 
 #define BUFSIZE 1024
 
+#define MAXFILES
+
+extern  int alphasort(); 
+
+int file_select(const struct direct   *entry) 
+{ 
+    if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
+          return (FALSE); 
+    else 
+          return (TRUE); 
+}
+
 /*
  * error - wrapper for perror
  */
@@ -34,7 +46,7 @@ int split_buff (char string[], char ***buf){
 
 	strcpy(str, string);
 	
-	p =  strtok (str, ", ");
+	p =  strtok (str, ",");
 
 	//Divisao da string np vetor
 	while (p != NULL) {
@@ -50,7 +62,7 @@ int split_buff (char string[], char ***buf){
 		
 		n_spaces++;
 		
-		p = strtok (NULL, ", ");
+		p = strtok (NULL, ",");
 	}
 	*buf = ret;
 		
@@ -81,12 +93,16 @@ void free_buf(int n,  char ***buf)
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
-    int i;
+    int i, count;
     //numero de informações no array de comandos
     int ni;
     //array de comandos
     char **cmdstr;
+    char str[BUFSIZE];
+    struct direct **files;
     struct stat st;
+    //arrays usados para inicios e fins de nomes de arquivos(DL­‐REQ)
+    int *ini, *fim, x;
     
   //  cmdstr = (char*) malloc(BUFSIZE * sizeof(char));
   //  cmdstr2 = (char*) malloc(BUFSIZE * sizeof(char));
@@ -125,7 +141,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 	}
 	
-	//DC-­‐REQ,path(string),strlen(int), dirname(string),strlen(int)
+	//DC-­REQ,path(string),strlen(int), dirname(string),strlen(int)
 	//cria um novo subdiretório dirname em path
 	else if (strcmp(cmdstr[0], "DC-REQ") == 0)
 	{
@@ -133,66 +149,91 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 		printf("aqui!\n");
 		
-		/*
-		//path
-		cmdstr = strtok(NULL,", ");
-		//strlen
-		cmdstr2 = strtok(NULL,", ");
-		//dirname
-		cmdstr2 = strtok(NULL,", ");
+		printf("1 :%s 2 :%s", cmdstr[1], cmdstr[3]);
 		
-		//cmdstr = full path
-		strcat(cmdstr, cmdstr2);
-		
-		printf("cmdstr: %s\n, cmdstr2: %s\n", cmdstr, cmdstr2);
-		
-		
-		
-		//cria novo diretório em path se diretório já não existe
-		if (stat(cmdstr, &st) == -1)
+		//str = full relative path
+		if(strcmp(cmdstr[1], " ") != 0)
 		{
-			printf("cria\n");
-			mkdir(cmdstr, 0700);
+			strcpy(str, cmdstr[1]);
 			
-			//buf  = DC-­‐REP,path(string),strlen(int)       
-			strcpy(buf, "DC-REP, ");
-			strcat(buf, cmdstr);
-			strcat(buf, ", ");
-			//strcat(buf, itoa(strlen(cmdstr), cmdstr2, 10));
-			sprintf(buf, "%s, %d", buf, strlen(cmdstr));
+			strcat(str, "/");
+			
+			strcat(str, cmdstr[3]);
 		}
 		else
 		{
-			printf("não cria")
+			strcpy(str, cmdstr[3]);
+		}		
+		
+		//cria novo diretório em path se diretório já não existe
+		if (stat(str, &st) == -1)
+		{
+			mkdir(str, 0700);
+			
 			//buf  = DC-­‐REP,path(string),strlen(int)       
-			strcpy(buf, "DC-REP, ");
-			strcat(buf, ", ");
-			sprintf(buf, "%s, %d", buf, 0);
+			sprintf(buf, "DC-REP, %s, %d", str, strlen(str));
 		}
-		*/
+		else
+		{
+			//buf  = DC-­‐REP,path(string),strlen(int)       
+			strcpy(buf, "DC-REP, , 0");
+		}
 		
 		
 	}
-	
+	//DR‐REQ,path(string),strlen(int),dirname(string),strlen(int)
+	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
 		
 	}
 	
+	//DL­‐REQ,path(string),strlen(int)
+	//mostra o nome dos arquivos no diretório path
 	else if (strcmp(cmdstr[0], "DL-REQ") == 0)
 	{
+		printf("DL-REQ!\n");
+		
+		ini = (int*) malloc(MAXFILES * sizeof(int));
+		fim = (int*) malloc(MAXFILES * sizeof(int));
+		if(ini == NULL || fim == NULL)
+		{
+			printf("problema de alocação de memória\n");
+			exit(0);
+		}
+		
+		count = scandir( cmdstr[1], &files, file_select, alphasort);
+		printf("count: %d", count);
+		//DL­‐REP,allfilenames(string),fstlstpositions(array[40] of struct{int,int}),nrnames(int)
+		//retorna os nomes de todos os arquivos/subdiretórios em path em um unico char array, sendo que fstlstpositions[i] indica a posição inicial e final do i-­ésimo nome em allfilenames
+		
+		strcpy(buf, "DL-REP");
+		for(i = 0, x = 0; i < count;i++)
+		{
+			sprintf(str, "%s", files[i]->d_name);
+			strcat(buf, str);
+			ini[i] = x;
+			x += strlen(str);
+			fim[i] = x;
+		}
+		strcat(buf, ", ");
+		for(i = 0; i < count; i++)
+		{
+			sprintf(str, "%d %d", ini[i], fim[i]);
+		}
 		
 	}
 
 	else 
 	{
 		printf("ERRO. Comando não reconhecido.\n");
+		strcpy(buf, "ERRO. Comando não reconhecido.");
 		
 	}
     
-	strcpy(name, "name");
-    *cmd = 0;
-    strcpy(buf, "OK");
+	
+    cmd = atoi(cmdstr[0]);
+    	name = strtok(NULL, "\0");
     
     free_buf(ni, &cmdstr);
     
@@ -275,8 +316,16 @@ int main(int argc, char **argv) {
     /* 
      * gethostbyaddr: determine who sent the datagram
      */
+     
+    printf("teste feedback:%s\n", buf);
+    
+    printf("Olha eu aqui!\n");
+    //dá segfault aqui
     hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
 			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+	
+	printf("Olha eu ali!\n");
+    
     if (hostp == NULL)
       error("ERROR on gethostbyaddr");
     hostaddrp = inet_ntoa(clientaddr.sin_addr);
