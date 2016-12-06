@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 
 #define BUFSIZE 1024
 
@@ -23,12 +24,178 @@ void error(char *msg) {
   exit(1);
 }
 
-int parse_buff (char *buff, int n, int *cmd, char *name) {
-    char *cmdstr;
+//função auxiliar que aloca array de strings dada uma string com o separador ,
+int split_buff (char string[], char ***buf){
+
+	char str[BUFSIZE];
+	char *p, **ret ;
+	int n_spaces = 0, i;
+	ret = (char**) malloc(0 * sizeof(char*));
+
+	strcpy(str, string);
+	
+	p =  strtok (str, ", ");
+
+	//Divisao da string np vetor
+	while (p != NULL) {
+		ret = realloc (ret, sizeof (char*) * (n_spaces+1));
+
+		if (ret == NULL){
+			printf("Erro. Falha na alocacao de memoria.\n");
+	    	exit (-1); 
+		}
+		
+		ret[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
+		strcpy(ret[n_spaces], p);
+		
+		n_spaces++;
+		
+		p = strtok (NULL, ", ");
+	}
+	*buf = ret;
+		
+	return n_spaces;
+
+}
+//função que libera array de string alocado por split_buff()
+void free_buf(int n,  char ***buf)
+{
+	int i;
+	char **res = *buf;
+	for(i = 0; i < n; i++)
+	{
+		if(res[i] != NULL)
+		{
+			free(res[i]);
+		}
+		
+	}
+	if(**buf != NULL)
+	{
+		free(**buf);
+	}
+	
+	return;
+}
+
+//função parser que interpreta o comando recebido em buf e o interpreta de acordo
+int parse_buff (char *buf, int n, int *cmd, char *name) {
     
-    cmdstr = strtok(buff," ");
-        name = strtok(NULL,"\0");
-    *cmd = atoi(cmdstr);
+    int i;
+    //numero de informações no array de comandos
+    int ni;
+    //array de comandos
+    char **cmdstr;
+    struct stat st;
+    
+  //  cmdstr = (char*) malloc(BUFSIZE * sizeof(char));
+  //  cmdstr2 = (char*) malloc(BUFSIZE * sizeof(char));
+    
+    //cmdstr = strtok(buf,", ");
+    cmdstr = NULL;
+    //printf("%s\n", buf);
+    ni = split_buff(buf, &cmdstr);
+    
+    for(i = 0; i < ni; i++)
+    {
+    	printf("cmdstr[%d]: %s\n", i, cmdstr[i]);
+    }
+    
+    
+	//RD-­‐REQ,path(string),strlen(int),payload(stringvazio),nrbytes(int),offset(int)
+	//lê nrbytes do arquivo path a partir da posição offset
+	if (strcmp(cmdstr[0], "RD-REQ") == 0)
+	{
+		
+		
+	}
+	
+	
+	//WR-­-REQ,path(string),strlen(int),payload(string),nrbytes(int),offset(int)
+	//escreve nrbytes do conteúdo de payload no arquivo path a partir da posição offset
+	else if (strcmp(cmdstr[0], "WR-REQ") == 0)
+	{
+		
+	}
+
+	
+	
+	else if (strcmp(cmdstr[0], "FI-REQ") == 0)
+	{
+		
+	}
+	
+	//DC-­‐REQ,path(string),strlen(int), dirname(string),strlen(int)
+	//cria um novo subdiretório dirname em path
+	else if (strcmp(cmdstr[0], "DC-REQ") == 0)
+	{
+		
+		
+		printf("aqui!\n");
+		
+		/*
+		//path
+		cmdstr = strtok(NULL,", ");
+		//strlen
+		cmdstr2 = strtok(NULL,", ");
+		//dirname
+		cmdstr2 = strtok(NULL,", ");
+		
+		//cmdstr = full path
+		strcat(cmdstr, cmdstr2);
+		
+		printf("cmdstr: %s\n, cmdstr2: %s\n", cmdstr, cmdstr2);
+		
+		
+		
+		//cria novo diretório em path se diretório já não existe
+		if (stat(cmdstr, &st) == -1)
+		{
+			printf("cria\n");
+			mkdir(cmdstr, 0700);
+			
+			//buf  = DC-­‐REP,path(string),strlen(int)       
+			strcpy(buf, "DC-REP, ");
+			strcat(buf, cmdstr);
+			strcat(buf, ", ");
+			//strcat(buf, itoa(strlen(cmdstr), cmdstr2, 10));
+			sprintf(buf, "%s, %d", buf, strlen(cmdstr));
+		}
+		else
+		{
+			printf("não cria")
+			//buf  = DC-­‐REP,path(string),strlen(int)       
+			strcpy(buf, "DC-REP, ");
+			strcat(buf, ", ");
+			sprintf(buf, "%s, %d", buf, 0);
+		}
+		*/
+		
+		
+	}
+	
+	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
+	{
+		
+	}
+	
+	else if (strcmp(cmdstr[0], "DL-REQ") == 0)
+	{
+		
+	}
+
+	else 
+	{
+		printf("ERRO. Comando não reconhecido.\n");
+		
+	}
+    
+	strcpy(name, "name");
+    *cmd = 0;
+    strcpy(buf, "OK");
+    
+    free_buf(ni, &cmdstr);
+    
     return 0;
 }
 
@@ -103,6 +270,8 @@ int main(int argc, char **argv) {
       error("ERROR in recvfrom");
       
     parse_buff(buf,n, &cmd, name);
+    
+    
     /* 
      * gethostbyaddr: determine who sent the datagram
      */
@@ -112,11 +281,17 @@ int main(int argc, char **argv) {
       error("ERROR on gethostbyaddr");
     hostaddrp = inet_ntoa(clientaddr.sin_addr);
     if (hostaddrp == NULL)
-      error("ERROR on inet_ntoa\n");
+    {
+    	error("ERROR on inet_ntoa\n");
+    }
+      
     printf("server received datagram from %s (%s)\n", 
 	   hostp->h_name, hostaddrp);
+	printf("aqui!! Oi!!\n");
+	printf("buf: %s\n", buf);
     printf("server received %ld/%d bytes: %s\n", strlen(buf), n, buf);
     
+  
     /* 
      * sendto: echo the input back to the client 
      */
