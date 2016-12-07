@@ -8,19 +8,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
+#include <sys/dir.h> 
+#include <sys/param.h> 
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #define BUFSIZE 1024
 
-#define MAXFILES
+#define TRUE 1
+#define FALSE 0
+
+#define MAXFILES 40
 
 extern  int alphasort(); 
 
-int file_select(const struct direct   *entry) 
+int file_select(const struct direct *entry) 
 { 
     if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
           return (FALSE); 
@@ -202,24 +208,30 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			exit(0);
 		}
 		
+		if(strcmp(cmdstr[1], " ") == 0)
+		{
+			strcpy(cmdstr[1], "./");
+		}
+		
 		count = scandir( cmdstr[1], &files, file_select, alphasort);
 		printf("count: %d", count);
 		//DL­‐REP,allfilenames(string),fstlstpositions(array[40] of struct{int,int}),nrnames(int)
 		//retorna os nomes de todos os arquivos/subdiretórios em path em um unico char array, sendo que fstlstpositions[i] indica a posição inicial e final do i-­ésimo nome em allfilenames
 		
-		strcpy(buf, "DL-REP");
+		strcpy(buf, "DL-REP,");
 		for(i = 0, x = 0; i < count;i++)
 		{
 			sprintf(str, "%s", files[i]->d_name);
 			strcat(buf, str);
 			ini[i] = x;
 			x += strlen(str);
-			fim[i] = x;
+			fim[i] = x - 1;
 		}
-		strcat(buf, ", ");
+		strcat(buf, ",");
 		for(i = 0; i < count; i++)
 		{
-			sprintf(str, "%d %d", ini[i], fim[i]);
+			sprintf(str, "%d %d ", ini[i], fim[i]);
+			strcat(buf, str);
 		}
 		
 	}
@@ -308,8 +320,10 @@ int main(int argc, char **argv) {
     n = recvfrom(sockfd, buf, BUFSIZE, 0,
 		 (struct sockaddr *) &clientaddr, &clientlen);
     if (n < 0)
+    {
       error("ERROR in recvfrom");
-      
+    } 
+    
     parse_buff(buf,n, &cmd, name);
     
     
