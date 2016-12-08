@@ -29,17 +29,17 @@ extern  int alphasort();
 int file_select(const struct direct *entry) 
 { 
     if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))  
-          return (FALSE); 
+        return (FALSE); 
     else 
-          return (TRUE); 
+        return (TRUE); 
 }
 
 /*
  * error - wrapper for perror
  */
 void error(char *msg) {
-  perror(msg);
-  exit(1);
+	perror(msg);
+	exit(1);
 }
 
 //função auxiliar que aloca array de strings dada uma string com o separador ,
@@ -96,6 +96,88 @@ void free_buf(int n,  char ***buf)
 	return;
 }
 
+int remove_folder (char path[], int first, char *buf){
+
+	int empty;
+	struct dirent *next_file;
+	char filePath[256];
+	char dot[256], dotdot[256];
+	DIR *folder = opendir(path);
+	DIR *home = opendir(".");
+	int found = FALSE;
+
+	empty = rmdir(path); 
+
+	//dot e dotdot guardam o path das pastas /. e /..
+	strcpy(dot, path);
+	strcat(dot, "/.");
+	strcpy(dotdot, path);
+	strcat(dotdot, "/..");
+
+	//Este if serve para checar se a pasta path eh existente. Nao se entra neste if nas chamadas recursivas.
+	if(first == TRUE){
+
+		while((next_file = readdir(home)) != NULL){
+
+			sprintf(filePath, "%s/%s", path, next_file->d_name);
+
+			if(strcmp(path, next_file->d_name) == 0){
+				found = TRUE;
+				break;
+			}
+		}
+		closedir(home);
+
+		if(found == FALSE){
+			printf("ERRO. Pasta nao existente.\n");
+			strcpy(buf, "ERRO. Pasta nao existente.\n");
+			return 1;
+		}
+	}
+
+	if(empty < 0){
+
+		while((next_file = readdir(folder)) != NULL){ //Varre tudo q tem dentro da pasta
+
+			sprintf(filePath, "%s/%s", path, next_file->d_name);
+			
+			if(strcmp(filePath, dot) != 0 && strcmp(filePath, dotdot) != 0){  //Previne o programa de alterar /. e /..
+				
+				if(next_file->d_type == DT_DIR){ //Descobre se eh pasta
+					printf("%s is a path.\n", filePath);
+					empty = rmdir(filePath);
+					if(empty < 0){
+						remove_folder(filePath, FALSE, NULL);
+						rmdir(filePath);
+					}
+				}
+				else if(next_file->d_type == DT_REG){ //Descobre se eh arquivo
+
+					printf("%s is a file.\n", filePath);
+					remove(filePath);
+				}
+			}
+		}
+		closedir(folder);
+		empty = rmdir(path);
+
+	}
+	if(empty != 0){
+		printf("Erro ao remover o diretorio.\n");
+		strcpy(buf, "ERRO. Nao foi possivel remover o diretorio.\n");
+		return 2;
+	}
+
+	printf("Diretorio '%s'foi deletado com sucesso.\n", path);
+
+	if(first == TRUE){
+		strcpy(buf, "Diretorio '");
+		strcat(buf, path);
+		strcat(buf, "' foi removido com sucesso.\n");
+	}
+	return 0;
+}
+
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
@@ -110,8 +192,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     //arrays usados para inicios e fins de nomes de arquivos(DL­‐REQ)
     int *ini, *fim, x;
     
-  //  cmdstr = (char*) malloc(BUFSIZE * sizeof(char));
-  //  cmdstr2 = (char*) malloc(BUFSIZE * sizeof(char));
+  	//cmdstr = (char*) malloc(BUFSIZE * sizeof(char));
+  	//cmdstr2 = (char*) malloc(BUFSIZE * sizeof(char));
     
     //cmdstr = strtok(buf,", ");
     cmdstr = NULL;
@@ -191,11 +273,12 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
-		
+		remove_folder(cmdstr[1], TRUE, buf);
 	}
 	
 	//DL­‐REQ,path(string),strlen(int)
 	//mostra o nome dos arquivos no diretório path
+	
 	else if (strcmp(cmdstr[0], "DL-REQ") == 0)
 	{
 		printf("DL-REQ!\n");
@@ -235,7 +318,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		
 	}
-
+	
 	else 
 	{
 		printf("ERRO. Comando não reconhecido.\n");
@@ -243,124 +326,120 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 	}
     
-	
-    cmd = atoi(cmdstr[0]);
-    	name = strtok(NULL, "\0");
+	//cmd e name s~ao mesmo necessarios????
+    //cmd = atoi(cmdstr[0]);
+    //name = strtok(NULL, "\0");
     
-    free_buf(ni, &cmdstr);
+    //free_buf(ni, &cmdstr); //free_buf causando erro no hostp da main
     
     return 0;
 }
 
 int main(int argc, char **argv) {
-  int sockfd; /* socket */
-  int portno; /* port to listen on */
-  int clientlen; /* byte size of client's address */
-  struct sockaddr_in serveraddr; /* server's addr */
-  struct sockaddr_in clientaddr; /* client addr */
-  struct hostent *hostp; /* client host info */
-  char buf[BUFSIZE]; /* message buf */
-  char *hostaddrp; /* dotted decimal host addr string */
-  int optval; /* flag value for setsockopt */
-  int n; /* message byte size */
+  	int sockfd; /* socket */
+  	int portno; /* port to listen on */
+  	int clientlen; /* byte size of client's address */
+  	struct sockaddr_in serveraddr; /* server's addr */
+  	struct sockaddr_in clientaddr; /* client addr */
+  	struct hostent *hostp; /* client host info */
+  	char buf[BUFSIZE]; /* message buf */
+  	char *hostaddrp; /* dotted decimal host addr string */
+  	int optval; /* flag value for setsockopt */
+  	int n; /* message byte size */
     
-  char name[BUFSIZE];   // name of the file received from client
-  int cmd;              // cmd received from client
+  	char name[BUFSIZE];   // name of the file received from client
+  	int cmd;              // cmd received from client
     
-  /* 
-   * check command line arguments 
-   */
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <port>\n", argv[0]);
-    exit(1);
-  }
-  portno = atoi(argv[1]);
+	/* 
+	 * check command line arguments 
+	 */
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s <port>\n", argv[0]);
+		exit(1);
+	}
+	portno = atoi(argv[1]);
 
-  /* 
-   * socket: create the parent socket 
-   */
-  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sockfd < 0) 
-    error("ERROR opening socket");
+  	/* 
+   	 * socket: create the parent socket 
+   	 */
+  	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+  	if (sockfd < 0) 
+    	error("ERROR opening socket");
 
-  /* setsockopt: Handy debugging trick that lets 
-   * us rerun the server immediately after we kill it; 
-   * otherwise we have to wait about 20 secs. 
-   * Eliminates "ERROR on binding: Address already in use" error. 
-   */
-  optval = 1;
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, 
-	     (const void *)&optval , sizeof(int));
+  	/* setsockopt: Handy debugging trick that lets 
+   	 * us rerun the server immediately after we kill it; 
+   	 * otherwise we have to wait about 20 secs. 
+   	 * Eliminates "ERROR on binding: Address already in use" error. 
+   	 */
+  	optval = 1;
+  	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
 
-  /*
-   * build the server's Internet address
-   */
-  bzero((char *) &serveraddr, sizeof(serveraddr));
-  serveraddr.sin_family = AF_INET;
-  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  serveraddr.sin_port = htons((unsigned short)portno);
+  	/*
+	 * build the server's Internet address
+	 */
+  	bzero((char *) &serveraddr, sizeof(serveraddr));
+  	serveraddr.sin_family = AF_INET;
+  	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  	serveraddr.sin_port = htons((unsigned short)portno);
 
-  /* 
-   * bind: associate the parent socket with a port 
-   */
-  if (bind(sockfd, (struct sockaddr *) &serveraddr, 
-	   sizeof(serveraddr)) < 0) 
-    error("ERROR on binding");
+  	/* 
+   	 * bind: associate the parent socket with a port 
+   	 */
+  	if (bind(sockfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0) 
+    	error("ERROR on binding");
 
-  /* 
-   * main loop: wait for a datagram, then echo it
-   */
-  clientlen = sizeof(clientaddr);
-  while (1) {
+  	/* 
+   	 * main loop: wait for a datagram, then echo it
+   	 */
+  	clientlen = sizeof(clientaddr);
 
-    /*
-     * recvfrom: receive a UDP datagram from a client
-     */
-    bzero(buf, BUFSIZE);
-    n = recvfrom(sockfd, buf, BUFSIZE, 0,
-		 (struct sockaddr *) &clientaddr, &clientlen);
-    if (n < 0)
-    {
-      error("ERROR in recvfrom");
-    } 
-    
-    parse_buff(buf,n, &cmd, name);
-    
-    
-    /* 
-     * gethostbyaddr: determine who sent the datagram
-     */
-     
-    printf("teste feedback:%s\n", buf);
-    
-    printf("Olha eu aqui!\n");
-    //dá segfault aqui
-    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
-			  sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-	
-	printf("Olha eu ali!\n");
-    
-    if (hostp == NULL)
-      error("ERROR on gethostbyaddr");
-    hostaddrp = inet_ntoa(clientaddr.sin_addr);
-    if (hostaddrp == NULL)
-    {
-    	error("ERROR on inet_ntoa\n");
-    }
-      
-    printf("server received datagram from %s (%s)\n", 
-	   hostp->h_name, hostaddrp);
-	printf("aqui!! Oi!!\n");
-	printf("buf: %s\n", buf);
-    printf("server received %ld/%d bytes: %s\n", strlen(buf), n, buf);
-    
-  
-    /* 
-     * sendto: echo the input back to the client 
-     */
-    n = sendto(sockfd, buf, strlen(buf), 0, 
-	       (struct sockaddr *) &clientaddr, clientlen);
-    if (n < 0) 
-      error("ERROR in sendto");
-  }
+  	while (1) {
+
+	    /*
+	     * recvfrom: receive a UDP datagram from a client
+	     */
+	    bzero(buf, BUFSIZE);
+	    n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, &clientlen);
+	    if (n < 0)
+	    {
+	    	error("ERROR in recvfrom");
+	    } 
+	    
+	    parse_buff(buf,n, &cmd, name);
+	    
+	    /* 
+	     * gethostbyaddr: determine who sent the datagram
+	     */
+	     
+	    printf("teste feedback:%s\n", buf);
+	    
+	    printf("Olha eu aqui!\n");
+	    //dá segfault aqui
+	    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+		
+		printf("Olha eu ali!\n");
+	    
+	    if (hostp == NULL)
+	    	error("ERROR on gethostbyaddr");
+	    
+	    hostaddrp = inet_ntoa(clientaddr.sin_addr);
+	    
+	    if (hostaddrp == NULL)
+	    {
+	    	error("ERROR on inet_ntoa\n");
+	    }
+	      
+	    printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
+		printf("aqui!! Oi!!\n");
+		printf("buf: %s\n", buf);
+	    printf("server received %ld/%d bytes: %s\n", strlen(buf), n, buf);
+	    
+	    /* 
+	     * sendto: echo the input back to the client 
+	     */
+	    n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &clientaddr, clientlen);
+
+	    if (n < 0) 
+	    	error("ERROR in sendto");
+  	}
 }
