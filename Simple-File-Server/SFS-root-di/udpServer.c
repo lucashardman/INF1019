@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -130,7 +131,7 @@ int remove_folder (char path[], int first, char *buf){
 
 		if(found == FALSE){
 			printf("ERRO. Pasta nao existente.\n");
-			strcpy(buf, "ERRO. Pasta nao existente.\n");
+			strcpy(buf, "DR-REP: ERRO. Pasta nao existente.\n");
 			return 1;
 		}
 	}
@@ -164,17 +165,52 @@ int remove_folder (char path[], int first, char *buf){
 	}
 	if(empty != 0){
 		printf("Erro ao remover o diretorio.\n");
-		strcpy(buf, "ERRO. Nao foi possivel remover o diretorio.\n");
+		strcpy(buf, "DR-REP: ERRO. Nao foi possivel remover o diretorio.\n");
 		return 2;
 	}
 
 	printf("Diretorio '%s'foi deletado com sucesso.\n", path);
 
 	if(first == TRUE){
-		strcpy(buf, "Diretorio '");
+		strcpy(buf, "DR-REP: Diretorio '");
 		strcat(buf, path);
 		strcat(buf, "' foi removido com sucesso.\n");
 	}
+	return 0;
+}
+
+int read_file(char path[], char *buf, int nrbytes, int offset){
+
+	int fd;
+	int i,j;
+	size_t nbytes;
+	ssize_t bytes_read;
+	char tempBuf[BUFSIZE];
+
+	if((fd = open(path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1){
+		printf("Este arquivo nao existe.\n");
+		strcpy(buf, "RD-REP: ");
+		strcat(buf, "Este arquivo nao existe.\n");
+		return 0;
+	}
+	strcpy(buf, "");
+
+	bytes_read = pread(fd, tempBuf, nrbytes, offset);
+	bytes_read = pread(fd, tempBuf, bytes_read, offset); //Conserta caso o numero de bytes entrado como parametro seja maior do que o numero de bytes lido
+
+	if(offset > bytes_read){
+		strcpy(buf, "RD-REP: ");
+		strcat(buf, "Offset maior que o tamanho do arquivo.\n"); 
+		close(fd);
+		return 0;
+	}
+	else{
+		strcpy(buf, "RD-REP: ");
+		strcat(buf, tempBuf);
+	}
+	
+	printf("Numero de bytes: %d\n%s\n", bytes_read, buf);
+	close(fd);
 	return 0;
 }
 
@@ -210,8 +246,15 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//lê nrbytes do arquivo path a partir da posição offset
 	if (strcmp(cmdstr[0], "RD-REQ") == 0)
 	{
-		
-		
+		count=0;
+		while(cmdstr[count] != NULL){
+			count++;
+		}
+		if(count != 4){
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+			return 0;
+		}
+		read_file(cmdstr[1], buf, atoi(cmdstr[2]), atoi(cmdstr[3]));
 	}
 	
 	
