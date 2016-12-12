@@ -43,60 +43,6 @@ void error(char *msg) {
 	exit(1);
 }
 
-//função auxiliar que aloca array de strings dada uma string com o separador ,
-int split_buff (char string[], char ***buf){
-
-	char str[BUFSIZE];
-	char *p, **ret ;
-	int n_spaces = 0, i;
-	ret = (char**) malloc(0 * sizeof(char*));
-
-	strcpy(str, string);
-	
-	p =  strtok (str, ",");
-
-	//Divisao da string np vetor
-	while (p != NULL) {
-		ret = realloc (ret, sizeof (char*) * (n_spaces+1));
-
-		if (ret == NULL){
-			printf("Erro. Falha na alocacao de memoria.\n");
-	    	exit (-1); 
-		}
-		
-		ret[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
-		strcpy(ret[n_spaces], p);
-		
-		n_spaces++;
-		
-		p = strtok (NULL, ",");
-	}
-	*buf = ret;
-		
-	return n_spaces;
-
-}
-//função que libera array de string alocado por split_buff()
-void free_buf(int n,  char ***buf)
-{
-	int i;
-	char **res = *buf;
-	for(i = 0; i < n; i++)
-	{
-		if(res[i] != NULL)
-		{
-			free(res[i]);
-		}
-		
-	}
-	if(**buf != NULL)
-	{
-		free(**buf);
-	}
-	
-	return;
-}
-
 int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	int empty;
@@ -245,6 +191,64 @@ int create_dir(char *path, char *buf)
 }
 
 
+//função auxiliar que aloca array de strings dada uma string com o separador ,
+char** split_buff (char string[], int *n){
+
+	char str[BUFSIZE];
+	char *p, **ret ;
+	int n_spaces = 0, i;
+	char **buf = (char**) malloc(0 * sizeof(char*));
+
+	strcpy(str, string);
+	
+	p =  strtok (str, ",");
+
+	//Divisao da string np vetor
+	while (p != NULL) {
+		buf = realloc (buf, sizeof (char*) * (n_spaces+1));
+
+		if (buf == NULL){
+			printf("Erro. Falha na alocacao de memoria.\n");
+	    	exit (-1); 
+		}
+		
+		buf[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
+		strcpy(buf[n_spaces], p);
+		
+		n_spaces++;
+		
+		p = strtok (NULL, ",");
+	}
+	for(i = 0; i < n_spaces; i++)
+	    {
+	    	printf("buf[%d]: %s\n", i, buf[i]);
+	    }
+	printf("return %d\n", n_spaces);
+	*n = n_spaces;
+	return buf;
+
+}
+//função que libera array de string alocado por split_buff()
+void free_buf(int n,  char **buf)
+{
+	int i;
+	
+	for(i = 0; i < n; i++)
+	{
+		if(buf[i] != NULL)
+		{
+			free(buf[i]);
+		}
+		
+	}
+	if(buf != NULL)
+	{
+		free(buf);
+	}
+	
+	return;
+}
+
 
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
@@ -266,7 +270,9 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     //cmdstr = strtok(buf,", ");
     cmdstr = NULL;
     //printf("%s\n", buf);
-    ni = split_buff(buf, &cmdstr);
+    printf("split-buf\n");
+    cmdstr = split_buff(buf, &ni);
+    printf("ni: %d\n", ni);
     
     for(i = 0; i < ni; i++)
     {
@@ -320,8 +326,11 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		else
 		{
+			printf("here\n");
 			strcpy(str, cmdstr[3]);
 		}		
+		
+		printf("str: %s\n", str);
 		
 		//cria novo diretório em path se diretório já não existe
 		create_dir(str, buf);
@@ -403,7 +412,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     //cmd = atoi(cmdstr[0]);
     //name = strtok(NULL, "\0");
     
-    //free_buf(ni, &cmdstr); //free_buf causando erro no hostp da main
+    free_buf(ni, cmdstr); //free_buf causando erro no hostp da main
     
     return 0;
 }
