@@ -97,17 +97,24 @@ void free_buf(int n,  char ***buf)
 	return;
 }
 
-int remove_folder (char path[], int first, char *buf){
+int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	int empty;
 	struct dirent *next_file;
 	char filePath[256];
 	char dot[256], dotdot[256];
-	DIR *folder = opendir(path);
+	DIR *folder;
 	DIR *home = opendir(".");
 	int found = FALSE;
+	
+	folder = opendir(path);
 
-	empty = rmdir(path); 
+	empty = rmdir(path);
+	if(empty >= 0)
+	{
+		//escrever buf
+		return 0;
+	}
 
 	//dot e dotdot guardam o path das pastas /. e /..
 	strcpy(dot, path);
@@ -122,13 +129,14 @@ int remove_folder (char path[], int first, char *buf){
 
 			sprintf(filePath, "%s/%s", path, next_file->d_name);
 
-			if(strcmp(path, next_file->d_name) == 0){
+			if(strcmp(dirname, next_file->d_name) == 0){
 				found = TRUE;
 				break;
 			}
 		}
 		closedir(home);
-
+		
+		
 		if(found == FALSE){
 			printf("ERRO. Pasta nao existente.\n");
 			strcpy(buf, "DR-REP: ERRO. Pasta nao existente.\n");
@@ -148,7 +156,8 @@ int remove_folder (char path[], int first, char *buf){
 					printf("%s is a path.\n", filePath);
 					empty = rmdir(filePath);
 					if(empty < 0){
-						remove_folder(filePath, FALSE, NULL);
+						
+						remove_folder(filePath, FALSE, NULL,next_file->d_name);
 						rmdir(filePath);
 					}
 				}
@@ -214,6 +223,29 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	return 0;
 }
 
+//cria novo diretorio se ele nao existe
+int create_dir(char *path, char *buf)
+{
+	struct stat st;
+		
+	if (stat(path, &st) == -1)
+	{
+		mkdir(path, 0700);
+	
+		//buf  = DC-­‐REP,path(string),strlen(int)       
+		sprintf(buf, "DC-REP, %s, %d", path, strlen(path));
+	}
+	else
+	{
+		//buf  = DC-­‐REP,path(string),strlen(int)       
+		strcpy(buf, "DC-REP, , 0");
+	}
+	return 0;
+		
+}
+
+
+
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
@@ -277,11 +309,6 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	else if (strcmp(cmdstr[0], "DC-REQ") == 0)
 	{
 		
-		
-		printf("aqui!\n");
-		
-		printf("1 :%s 2 :%s", cmdstr[1], cmdstr[3]);
-		
 		//str = full relative path
 		if(strcmp(cmdstr[1], " ") != 0)
 		{
@@ -297,18 +324,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}		
 		
 		//cria novo diretório em path se diretório já não existe
-		if (stat(str, &st) == -1)
-		{
-			mkdir(str, 0700);
-			
-			//buf  = DC-­‐REP,path(string),strlen(int)       
-			sprintf(buf, "DC-REP, %s, %d", str, strlen(str));
-		}
-		else
-		{
-			//buf  = DC-­‐REP,path(string),strlen(int)       
-			strcpy(buf, "DC-REP, , 0");
-		}
+		create_dir(str, buf);
 		
 		
 	}
@@ -316,7 +332,21 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
-		remove_folder(cmdstr[1], TRUE, buf);
+		//str = full relative path
+		if(strcmp(cmdstr[1], " ") != 0)
+		{
+			strcpy(str, cmdstr[1]);
+			
+			strcat(str, "/");
+			
+			strcat(str, cmdstr[3]);
+		}
+		else
+		{
+			strcpy(str, cmdstr[3]);
+		}
+		
+		remove_folder(str, TRUE, buf, cmdstr[3]);
 	}
 	
 	//DL­‐REQ,path(string),strlen(int)
