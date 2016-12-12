@@ -151,15 +151,20 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	strcpy(buf, "");
 
 	bytes_read = pread(fd, tempBuf, nrbytes, offset);
-	bytes_read = pread(fd, tempBuf, bytes_read, offset); //Conserta caso o numero de bytes entrado como parametro seja maior do que o numero de bytes lido
 
-	if(offset > bytes_read){
+	if(bytes_read == 0){
 		strcpy(buf, "RD-REP: ");
 		strcat(buf, "Offset maior que o tamanho do arquivo.\n"); 
 		close(fd);
 		return 0;
 	}
-	else{
+	else if(bytes_read == nrbytes){
+		tempBuf[bytes_read+1] = '\0';
+		strcpy(buf, "RD-REP: ");
+		strcat(buf, tempBuf);
+	}
+	else if(bytes_read < nrbytes){
+		tempBuf[bytes_read] = '\0';
 		strcpy(buf, "RD-REP: ");
 		strcat(buf, tempBuf);
 	}
@@ -288,11 +293,25 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		while(cmdstr[count] != NULL){
 			count++;
 		}
-		if(count != 4){
+		
+		printf("BUF BEFORE READ_FILE: %s--------------------------\n", buf);
+		
+		if(count < 5){
 			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+			
+			count=0;
+			while(cmdstr[count] != NULL){
+				printf("%s\n", cmdstr[count]);
+				count++;
+			}
+			
 			return 0;
 		}
+		
+		
 		read_file(cmdstr[1], buf, atoi(cmdstr[2]), atoi(cmdstr[3]));
+		
+		printf("BUF AFTER READ_FILE: %s\n", buf);
 	}
 	
 	
