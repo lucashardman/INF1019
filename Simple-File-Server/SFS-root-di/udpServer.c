@@ -137,8 +137,6 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 int read_file(char path[], char *buf, int nrbytes, int offset){
 
 	int fd;
-	int i,j;
-	size_t nbytes;
 	ssize_t bytes_read;
 	char tempBuf[BUFSIZE];
 
@@ -171,6 +169,27 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	
 	printf("Numero de bytes: %d\n%s\n", bytes_read, buf);
 	close(fd);
+	return 0;
+}
+
+int write_file(char *path, char *buf, int nrbytes, int offset, char* payload)
+{
+	int fd;
+	ssize_t bytes_read;
+	int file_size;
+	int w, ret;
+	char tempBuf[BUFSIZE];
+	char eof[1] = {-1};
+	
+	printf("write\n");
+	printf("path: %s, nrbytes: %d, offset %d, payload %s,\n", path, nrbytes,offset,payload);
+	if((fd = open(path, O_WRONLY|O_CREAT, 0777)) > 0){
+		//get file-size
+		
+		lseek(fd, offset,SEEK_SET);
+		write(fd, payload, nrbytes);		
+		
+	}
 	return 0;
 }
 
@@ -224,11 +243,7 @@ char** split_buff (char string[], int *n){
 		
 		p = strtok (NULL, ",");
 	}
-	for(i = 0; i < n_spaces; i++)
-	    {
-	    	printf("buf[%d]: %s\n", i, buf[i]);
-	    }
-	printf("return %d\n", n_spaces);
+	
 	*n = n_spaces;
 	return buf;
 
@@ -255,6 +270,7 @@ void free_buf(int n,  char **buf)
 }
 
 
+
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
@@ -274,10 +290,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     
     //cmdstr = strtok(buf,", ");
     cmdstr = NULL;
-    //printf("%s\n", buf);
-    printf("split-buf\n");
+    
     cmdstr = split_buff(buf, &ni);
-    printf("ni: %d\n", ni);
     
     for(i = 0; i < ni; i++)
     {
@@ -309,7 +323,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		
 		
-		read_file(cmdstr[1], buf, atoi(cmdstr[2]), atoi(cmdstr[3]));
+		read_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]));
 		
 		printf("BUF AFTER READ_FILE: %s\n", buf);
 	}
@@ -319,7 +333,29 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//escreve nrbytes do conteúdo de payload no arquivo path a partir da posição offset
 	else if (strcmp(cmdstr[0], "WR-REQ") == 0)
 	{
+		count=0;
+		while(cmdstr[count] != NULL){
+			count++;
+		}
 		
+		printf("BUF BEFORE READ_FILE: %s--------------------------\n", buf);
+		
+		if(count < 5){
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+			
+			count=0;
+			while(cmdstr[count] != NULL){
+				printf("%s\n", cmdstr[count]);
+				count++;
+			}
+			
+			return 0;
+		}
+		
+		
+		write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3]);
+		
+		printf("BUF AFTER READ_FILE: %s\n", buf);
 	}
 
 	
@@ -500,7 +536,7 @@ int main(int argc, char **argv) {
 	     * recvfrom: receive a UDP datagram from a client
 	     */
 	    bzero(buf, BUFSIZE);
-	    n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, &clientlen);
+	    n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, (socklen_t*restrict)&clientlen);
 	    if (n < 0)
 	    {
 	    	error("ERROR in recvfrom");
