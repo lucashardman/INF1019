@@ -43,6 +43,35 @@ void error(char *msg) {
 	exit(1);
 }
 
+//cria entrada em meta-info.txt. Cria meta-info.txt se ele não existe
+//path(string),strlen(int),owner(int),permissions(2char)
+int create_entry(char* path, int owner, char* permissions)
+{
+	int fd, w;
+	char temp[20];
+	char *el = "\n";
+	char *comma = ",";
+	if((fd = open("meta-info.txt", O_WRONLY|O_CREAT, 0777)) > 0){
+		
+		lseek(fd, 0L,SEEK_END);
+		w = write(fd, path, strlen(path));
+		//itoa(strlen(path),temp,10);
+		w += write(fd, comma, 1);
+		snprintf(temp, 20, "%d", strlen(path));
+		w += write(fd, temp, strlen(temp));
+		w += write(fd, comma, 1);
+		//itoa(owner,temp,10);
+		snprintf(temp, 20, "%d", owner);
+		w += write(fd, temp, strlen(temp));
+		w += write(fd, comma, 1);
+		w += write(fd, permissions,strlen(permissions));
+		w += write(fd,el, 1);
+				
+	}
+	close(fd);
+	return w;
+}
+
 int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	int empty;
@@ -172,25 +201,53 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	return 0;
 }
 
-int write_file(char *path, char *buf, int nrbytes, int offset, char* payload)
+int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, char* perm)
 {
 	int fd;
 	ssize_t bytes_read;
 	int file_size;
-	int w, ret;
+	int w;
 	char tempBuf[BUFSIZE];
-	char eof[1] = {-1};
+	
+	//checa se arquivo a ser modificado é um dos arquivos do próprio servidor
+	if(strcmp(path,"udpServer.c") == 0 || strcmp(path,"meta-info.txt") == 0 || strcmp(path,"meta-info-format.txt") == 0)
+		{
+			printf("Permissão negada\n");
+			return -2;
+		}
+	
+	if(nrbytes == 0)
+	//deleta arquivo
+	{
+		printf("deletando %s\n", path);
+		unlink(path);		
+		return -1;
+	}
 	
 	printf("write\n");
 	printf("path: %s, nrbytes: %d, offset %d, payload %s,\n", path, nrbytes,offset,payload);
-	if((fd = open(path, O_WRONLY|O_CREAT, 0777)) > 0){
-		//get file-size
-		
+	if((fd = open(path, O_WRONLY, 0777)) > 0)
+	//arquivo já existe
+	{		
 		lseek(fd, offset,SEEK_SET);
-		write(fd, payload, nrbytes);		
-		
+		w = write(fd, payload, nrbytes);
+		close(fd);
 	}
-	return 0;
+	else
+	{
+		//cria arquivo
+		if((fd = open(path, O_WRONLY|O_CREAT, 0777)) > 0)
+		
+		{		
+			lseek(fd, offset,SEEK_SET);
+			w = write(fd, payload, nrbytes);		
+			//cria entrada para o novo arquivo na meta-informação
+			create_entry(path,1710, "WN", perm);
+			close(fd);
+		}
+	}
+	
+	return w;
 }
 
 //cria novo diretorio se ele nao existe
@@ -274,7 +331,7 @@ void free_buf(int n,  char **buf)
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
-    int i, count;
+    int i, count,w;
     //numero de informações no array de comandos
     int ni;
     //array de comandos
@@ -338,7 +395,6 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			count++;
 		}
 		
-		printf("BUF BEFORE READ_FILE: %s--------------------------\n", buf);
 		
 		if(count < 5){
 			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
@@ -353,9 +409,12 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		
 		
-		write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3]);
+		w = write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3]);
 		
-		printf("BUF AFTER READ_FILE: %s\n", buf);
+		//constrói reply
+		strcpy(buf,"");
+		sprintf(buf, "WR-REP,%s,%ld, ,%d,%d",cmdstr[1],strlen(cmdstr[1]), w,atoi(cmdstr[5]));
+		
 	}
 
 	
