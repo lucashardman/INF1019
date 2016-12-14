@@ -171,7 +171,7 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 
 	if((fd = open(path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1){
 		printf("Este arquivo nao existe.\n");
-		strcpy(buf, "RD-REP: ");
+		strcpy(buf, "RD-REP,");
 		strcat(buf, "Este arquivo nao existe.\n");
 		return 0;
 	}
@@ -180,20 +180,18 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	bytes_read = pread(fd, tempBuf, nrbytes, offset);
 
 	if(bytes_read == 0){
-		strcpy(buf, "RD-REP: ");
-		strcat(buf, "Offset maior que o tamanho do arquivo.\n"); 
+
+		sprintf(buf,"RD-REP,%s,%d,Offset maior que o tamanho do arquivo.,%d,%d",path,strlen(path),bytes_read,offset);
 		close(fd);
 		return 0;
 	}
 	else if(bytes_read == nrbytes){
 		tempBuf[bytes_read+1] = '\0';
-		strcpy(buf, "RD-REP: ");
-		strcat(buf, tempBuf);
+		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,strlen(path),tempBuf,bytes_read,offset);
 	}
 	else if(bytes_read < nrbytes){
 		tempBuf[bytes_read] = '\0';
-		strcpy(buf, "RD-REP: ");
-		strcat(buf, tempBuf);
+		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,strlen(path),tempBuf,bytes_read,offset);
 	}
 	
 	printf("Numero de bytes: %d\n%s\n", bytes_read, buf);
@@ -242,7 +240,7 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, ch
 			lseek(fd, offset,SEEK_SET);
 			w = write(fd, payload, nrbytes);		
 			//cria entrada para o novo arquivo na meta-informação
-			create_entry(path,1710, "WN", perm);
+			create_entry(path,1710, "WN");
 			close(fd);
 		}
 	}
@@ -365,10 +363,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			count++;
 		}
 		
-		printf("BUF BEFORE READ_FILE: %s--------------------------\n", buf);
-		
 		if(count < 5){
-			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'tamanho do nome do arquivo', 'um espaco vazio' ,'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
 			
 			count=0;
 			while(cmdstr[count] != NULL){
@@ -378,11 +374,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			
 			return 0;
 		}
-		
-		
 		read_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]));
-		
-		printf("BUF AFTER READ_FILE: %s\n", buf);
 	}
 	
 	
@@ -409,7 +401,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		
 		
-		w = write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3]);
+		w = write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3], NULL);
 		
 		//constrói reply
 		strcpy(buf,"");
@@ -455,6 +447,24 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
+
+		count=0;
+		while(cmdstr[count] != NULL){
+			count++;
+		}
+
+		if(count < 4){
+			printf("ERRO. %d parametros. Digite  'comando', 'endereco', 'tamanho da string do endereco', 'arquivo', 'tamanho da string do arquivo'.\n", count);
+			
+			count=0;
+			while(cmdstr[count] != NULL){
+				printf("%s\n", cmdstr[count]);
+				count++;
+			}
+			
+			return 0;
+		}
+
 		//str = full relative path
 		if(strcmp(cmdstr[1], " ") != 0)
 		{
@@ -468,7 +478,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		{
 			strcpy(str, cmdstr[3]);
 		}
-		
+		//Falta fazer o buf retornar com o DR-REP certo
 		remove_folder(str, TRUE, buf, cmdstr[3]);
 	}
 	
