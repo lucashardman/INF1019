@@ -183,6 +183,7 @@ int check_permission(char* path, int user, char desired_acess)
 				if(infos[4][0] == 'W' || infos[4][0] == desired_acess)
 				//permissão concedida
 				{
+					printf("concedida?\n");
 					free_buf(n_infos, infos);
 					return meta_size;
 				}
@@ -253,21 +254,47 @@ int create_entry(char* path, int owner, char* permissions)
 	return w;
 }
 
-//recebe a path de qualquer coisa e a permissão desejada de retorna >0 se a permissão é concedida
+//recebe a path de qualquer coisa e a permissão desejada de retorna >0 se a permissão é concedida, 'R' ou 'W'
 int check_dir_permission(char *path, int user, char permission)
 {
 	int i,n,p;
 	char pathdir[50];
 	char **div = split_buff_barra(path,&n);
+		
+	
 	strcpy(pathdir, "");
 	for(i = 0; i < n-1; i++)
 	{
 		strcat(pathdir,div[i]);
 	}
 	strcat(pathdir,"/dir-info.txt");
-	printf("%s\n", pathdir);
+	printf("pathdir: %s\n", pathdir);
 	p = check_permission(pathdir,user, permission);
-	if(p > 0 || p == -2)
+	if(p > 0)
+	{
+		//permissão concedida
+		free_buf(n,div);
+		return 1;
+	}
+	else
+	{
+		printf("permissão negada\n");
+		free_buf(n,div);
+		return -1;
+	}
+	
+}
+
+int check_dir_permission_for_dirs(char *path, int user, char permission)
+{
+	int i,n,p;
+	char pathdir[50];
+		
+	strcpy(pathdir, path);	
+	strcat(pathdir,"/dir-info.txt");
+	printf("pathdir: %s\n", pathdir);
+	p = check_permission(pathdir,user, permission);
+	if(p > 0)
 	{
 		//permissão concedida
 		return 1;
@@ -281,7 +308,7 @@ int check_dir_permission(char *path, int user, char permission)
 }
 
 
-int remove_folder (char *path, int first, char *buf, char *dirname){
+int remove_folder (char *path, int first, char *buf, char *dirname, int user){
 
 	int empty;
 	struct dirent *next_file;
@@ -290,7 +317,8 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 	DIR *folder;
 	DIR *home = opendir(".");
 	int found = 0; // 0 se FALSE, -1 se TRUE
-	
+	int ret;
+		
 	strcpy(str,path);
 	
 	if(first == TRUE){
@@ -308,6 +336,16 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 			strcpy(path, dirname);
 		}
 	}
+	
+	ret = check_dir_permission_for_dirs(path, user, 'W');
+	if(ret <= 0)
+	{
+		printf("denied\n");
+		strcpy(buf, "DL-REP,denied");
+		return 0;
+	}
+	printf("allowed\n");
+	
 	folder = opendir(path);
 
 	empty = rmdir(path);
@@ -350,7 +388,7 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 					empty = rmdir(filePath);
 					if(empty < 0){
 						
-						remove_folder(filePath, FALSE, NULL,next_file->d_name);
+						remove_folder(filePath, FALSE, NULL,next_file->d_name,user);
 						rmdir(filePath);
 					}
 				}
@@ -564,7 +602,7 @@ int create_dir(char *path, char *buf, int user, char *perms)
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
     
-    int i, count,w;
+    int i, count,w,ret;
     //numero de informações no array de comandos
     int ni;
     //array de comandos
@@ -676,7 +714,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 		
 	}
-	//DR‐REQ,path(string),strlen(int),dirname(string),strlen(int)
+	//DR‐REQ,path(string),strlen(int),dirname(string),strlen(int),user(int)
 	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
@@ -687,7 +725,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 
 		if(count < 5){
-			printf("ERRO. %d parametros. Digite  'comando', 'endereco', 'tamanho da string do endereco', 'arquivo', 'tamanho da string do arquivo'.\n", count);
+			printf("ERRO. %d parametros. Digite  'comando', 'endereco', 'tamanho da string do endereco', 'arquivo', 'tamanho da string do arquivo' e usuário.\n", count);
 			
 			count=0;
 			while(cmdstr[count] != NULL){
@@ -699,7 +737,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 
 		//Falta fazer o buf retornar com o DR-REP certo
-		remove_folder(cmdstr[1], TRUE, buf, cmdstr[3]);
+		remove_folder(cmdstr[1], TRUE, buf, cmdstr[3],atoi(cmdstr[5]));
 	}
 	
 	//DL­‐REQ,path(string),strlen(int),user(int)
@@ -709,7 +747,11 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	{
 		printf("DL-REQ!\n");
 		
-		if((check_dir_permission(cmdstr[0],cmdstr[1], 'R')) <= 0)
+		strcpy(str,cmdstr[1]);
+		strcat(str,"/dir-info.txt");
+		
+		ret = check_dir_permission_for_dirs(cmdstr[1],atoi(cmdstr[3]), 'R');
+		if(ret <= 0)
 		{
 			printf("denied\n");
 			strcpy(buf, "DL-REP,denied");

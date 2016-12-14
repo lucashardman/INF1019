@@ -1,3 +1,0 @@
-//formato da meta-informação existente para arquivos e diretórios
-path(string),strlen(int),owner(int),permissions(2char)
-
