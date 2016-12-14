@@ -1,10 +1,10 @@
 //formato da meta-informação existente para arquivos e diretórios
-path(string),strlen(int),owner(int),permissions(2char)
+XXXX,path(string),strlen(int),owner(int),permissions(2char),
 
 
 permissions é dado por dois char. Cada um deles pode ser W,R ou N. O primeiro diz respeito às permissões do usuário, o segundo às do cliente. W indica permissão de leitura e escrita, R de leitura, e N de nenhuma permissão.
 
 ex:
-test.txt,8,1234,WN
+0024,test.txt,8,1234,WN,
 
 o arquivo test.txt, cujo dono é 1234, pode ser lido e sobrescrito pelo próprio dono, porém nem lido nem sobrescrito por outros.

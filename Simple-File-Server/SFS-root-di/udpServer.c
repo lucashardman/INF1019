@@ -18,12 +18,16 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+//tamanho base da meta-informação em um arquivo/diretório padrão. É usada para armazenar um inteiro por escrito, que por sua vez informa qual o tamanho total da meta informação.
+#define min_meta 4
+
 #define BUFSIZE 1024
 
 #define TRUE 1
 #define FALSE 0
 
 #define MAXFILES 40
+#define MAXFILENAME 50
 
 extern  int alphasort(); 
 
@@ -43,18 +47,157 @@ void error(char *msg) {
 	exit(1);
 }
 
+//função auxiliar que aloca array de strings dada uma string com o separador ,
+char** split_buff (char string[], int *n){
+
+	char str[BUFSIZE];
+	char *p, **ret ;
+	int n_spaces = 0, i;
+	char **buf = (char**) malloc(0 * sizeof(char*));
+
+	strcpy(str, string);
+	
+	p =  strtok (str, ",");
+
+	//Divisao da string np vetor
+	while (p != NULL) {
+		buf = realloc (buf, sizeof (char*) * (n_spaces+1));
+
+		if (buf == NULL){
+			printf("Erro. Falha na alocacao de memoria.\n");
+	    	exit (-1); 
+		}
+		
+		buf[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
+		strcpy(buf[n_spaces], p);
+		
+		n_spaces++;
+		
+		p = strtok (NULL, ",");
+	}
+	
+	*n = n_spaces;
+	return buf;
+
+}
+//função que libera array de string alocado por split_buff()
+void free_buf(int n,  char **buf)
+{
+	int i;
+	
+	for(i = 0; i < n; i++)
+	{
+		if(buf[i] != NULL)
+		{
+			free(buf[i]);
+		}
+		
+	}
+	if(buf != NULL)
+	{
+		free(buf);
+	}
+	
+	return;
+}
+
+
+//checa se usuário user tem permissão para acessar arquivo em path. Se não tiver, retorna -1. Se tiver, retorna o tamanho da meta-informação no arquivo. Desired access é 'W' ou 'R'.
+int check_permission(char* path, int user, char desired_acess)
+{
+	int bytes_read, fd;
+	char tempBuf[MAXFILENAME];
+	int meta_size, i;
+	char **infos;
+	int n_infos;
+	if((fd = open(path, O_RDONLY)) > 0)
+	//arquivo existe
+	{
+		bytes_read = pread(fd, tempBuf, 4,0);
+		printf("bytes_read : %d\n", bytes_read);
+		i = 0;
+		while(tempBuf[i] == '0')
+		{
+			if(i >= 4)
+			{
+				printf("Meta-informação inconsistente. i: %d\n", i);
+				close(fd);
+				return -1;
+			}
+			i++;
+		}
+		printf("tempBuf: %s\n", tempBuf);
+		printf("tempBuf[i]: %s\n", &tempBuf[i]);
+		
+		meta_size = atoi(&tempBuf[i]);
+		printf("meta_size: %d\n", meta_size);
+		pread(fd, tempBuf, meta_size, 0);
+		close(fd);
+		infos = split_buff(tempBuf, &n_infos);
+		if(n_infos != 5 + 1)
+		{
+			printf("Meta-informação inconsistente. n:infos: %d\n", n_infos);
+			free_buf(n_infos, infos);
+			return -1;
+		}
+		else 
+		//checa permissões
+		{
+			if(user == atoi(infos[3]))
+			//se usuário é o dono:
+			{
+				if(infos[4][0] == 'W' || infos[4][0] == desired_acess)
+				//permissão concedida
+				{
+					free_buf(n_infos, infos);
+					return meta_size;
+				}
+				else
+				{
+					free_buf(n_infos, infos);
+					return -1;
+				}
+			}
+			else
+			//se usuário não é o dono:
+			{
+				if(infos[4][1] == 'W' || infos[4][1] == desired_acess)
+				//permissão concedida
+				{
+					free_buf(n_infos, infos);
+					return meta_size;
+				}
+				else
+				{
+					free_buf(n_infos, infos);
+					return -1;
+				}
+			}
+		}
+		free_buf(n_infos, infos);
+				
+	}
+	else
+	//arquivo não existe
+	{
+		return -2;
+	}
+}
+
 //cria entrada em meta-info.txt. Cria meta-info.txt se ele não existe
 //path(string),strlen(int),owner(int),permissions(2char)
 int create_entry(char* path, int owner, char* permissions)
 {
-	int fd, w;
+	int fd, w = -1;
 	char temp[20];
-	char *el = "\n";
+	char *el = ",\n";
 	char *comma = ",";
-	if((fd = open("meta-info.txt", O_WRONLY|O_CREAT, 0777)) > 0){
+	if((fd = open(path, O_WRONLY|O_CREAT, 0777)) > 0){
 		
-		lseek(fd, 0L,SEEK_END);
-		w = write(fd, path, strlen(path));
+		lseek(fd, 0L,SEEK_SET);
+		//reserva espaço para meta informação
+		w = write(fd, "xxxx,", 5);
+		w += write(fd, path, strlen(path));
 		//itoa(strlen(path),temp,10);
 		w += write(fd, comma, 1);
 		snprintf(temp, 20, "%d", strlen(path));
@@ -64,11 +207,15 @@ int create_entry(char* path, int owner, char* permissions)
 		snprintf(temp, 20, "%d", owner);
 		w += write(fd, temp, strlen(temp));
 		w += write(fd, comma, 1);
-		w += write(fd, permissions,strlen(permissions));
-		w += write(fd,el, 1);
-				
+		w += write(fd, permissions,2);
+		w += write(fd,el, strlen(el));
+		//escreve tamanho total da meta-informação no início do arquivo
+		lseek(fd,0L, SEEK_SET);
+		snprintf(temp,20, "%04d", w);
+		write(fd, temp, strlen(temp));
+		close(fd);
 	}
-	close(fd);
+	printf("w: %d\n", w);
 	return w;
 }
 
@@ -163,25 +310,43 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 	return 0;
 }
 
-int read_file(char path[], char *buf, int nrbytes, int offset){
+int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 
-	int fd;
+	int fd, mOffset;
 	ssize_t bytes_read;
 	char tempBuf[BUFSIZE];
+	
+	//checa permissão de leitura. Se concedida, o retorno é > 0 e igual a valor ao offset da meta informação
+	mOffset = check_permission(path, user, 'R');
+	//permissão concedida:
+	if(mOffset > 0)
+	{
+		
+	}
+	else if(mOffset == -1)
+	{
+		printf("Permissão negada\n");
+		return -1;
+	}
+	else if(mOffset == -2)
+	//arquivo não existe.
+	{
+		
+	}
+		
 
 	if((fd = open(path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1){
 		printf("Este arquivo nao existe.\n");
-		strcpy(buf, "RD-REP,");
-		strcat(buf, "Este arquivo nao existe.\n");
+		sprintf(buf,"RD-REP,%s,%d, ,0,%d",path,strlen(path),offset);
 		return 0;
 	}
 	strcpy(buf, "");
 
-	bytes_read = pread(fd, tempBuf, nrbytes, offset);
+	bytes_read = pread(fd, tempBuf, nrbytes, offset + mOffset);
 
 	if(bytes_read == 0){
 
-		sprintf(buf,"RD-REP,%s,%d,Offset maior que o tamanho do arquivo.,%d,%d",path,strlen(path),bytes_read,offset);
+		sprintf(buf,"RD-REP,%s,%d, ,0,%d",path,strlen(path),offset);
 		close(fd);
 		return 0;
 	}
@@ -199,20 +364,45 @@ int read_file(char path[], char *buf, int nrbytes, int offset){
 	return 0;
 }
 
-int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, char* perm)
+int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, int user, char* perm)
 {
 	int fd;
 	ssize_t bytes_read;
 	int file_size;
 	int w;
 	char tempBuf[BUFSIZE];
+	//offset equivalente a meta-informação dentro do arquivo
+	int mOffset;
 	
 	//checa se arquivo a ser modificado é um dos arquivos do próprio servidor
-	if(strcmp(path,"udpServer.c") == 0 || strcmp(path,"meta-info.txt") == 0 || strcmp(path,"meta-info-format.txt") == 0)
-		{
-			printf("Permissão negada\n");
-			return -2;
-		}
+	if(strcmp(path,"udpServer.c") == 0 || strcmp(path,"meta-info-format.txt") == 0)
+	{
+		printf("Permissão negada\n");
+		return -2;
+	}
+	
+	//checa permissão de escrita. Se concedida, o retorno é > 0 e igual a valor ao offset da meta informação
+	mOffset = check_permission(path, user, 'W');
+	if(mOffset > 0)
+	{
+		
+	}
+	else if(mOffset == -1)
+	{
+		printf("Permissão negada\n");
+		return -1;
+	}
+	else if(mOffset == -2)
+	//arquivo não existe. Cria arquivo
+	{
+		//cria arquivo do usuário com as permissões passadas. Retorna o offset da meta-informação
+		mOffset = create_entry(path,user, perm);
+	}
+	else
+	{
+		printf("Meta-informação inconsistente, mOffset: %d \n", mOffset);
+		return -3;
+	}
 	
 	if(nrbytes == 0)
 	//deleta arquivo
@@ -224,13 +414,22 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, ch
 	
 	printf("write\n");
 	printf("path: %s, nrbytes: %d, offset %d, payload %s,\n", path, nrbytes,offset,payload);
-	if((fd = open(path, O_WRONLY, 0777)) > 0)
-	//arquivo já existe
-	{		
-		lseek(fd, offset,SEEK_SET);
-		w = write(fd, payload, nrbytes);
-		close(fd);
+	
+	
+	//menor que zero indica não permissão ou erro de criação
+	printf("mOffset: %d\n", mOffset);
+	if(mOffset > 0)
+	{
+		if((fd = open(path, O_WRONLY, 0777)) > 0)
+		//arquivo já existe
+		{		
+			lseek(fd, offset + mOffset,SEEK_SET);
+			w = write(fd, payload, nrbytes);
+			close(fd);
+		}
 	}
+	
+	/*
 	else
 	{
 		//cria arquivo
@@ -244,6 +443,7 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, ch
 			close(fd);
 		}
 	}
+	*/
 	
 	return w;
 }
@@ -268,63 +468,6 @@ int create_dir(char *path, char *buf)
 	return 0;
 		
 }
-
-
-//função auxiliar que aloca array de strings dada uma string com o separador ,
-char** split_buff (char string[], int *n){
-
-	char str[BUFSIZE];
-	char *p, **ret ;
-	int n_spaces = 0, i;
-	char **buf = (char**) malloc(0 * sizeof(char*));
-
-	strcpy(str, string);
-	
-	p =  strtok (str, ",");
-
-	//Divisao da string np vetor
-	while (p != NULL) {
-		buf = realloc (buf, sizeof (char*) * (n_spaces+1));
-
-		if (buf == NULL){
-			printf("Erro. Falha na alocacao de memoria.\n");
-	    	exit (-1); 
-		}
-		
-		buf[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
-		strcpy(buf[n_spaces], p);
-		
-		n_spaces++;
-		
-		p = strtok (NULL, ",");
-	}
-	
-	*n = n_spaces;
-	return buf;
-
-}
-//função que libera array de string alocado por split_buff()
-void free_buf(int n,  char **buf)
-{
-	int i;
-	
-	for(i = 0; i < n; i++)
-	{
-		if(buf[i] != NULL)
-		{
-			free(buf[i]);
-		}
-		
-	}
-	if(buf != NULL)
-	{
-		free(buf);
-	}
-	
-	return;
-}
-
-
 
 //função parser que interpreta o comando recebido em buf e o interpreta de acordo
 int parse_buff (char *buf, int n, int *cmd, char *name) {
@@ -354,7 +497,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     }
     
     
-	//RD-­‐REQ,path(string),strlen(int),payload(stringvazio),nrbytes(int),offset(int)
+	//RD-­‐REQ,path(string),strlen(int),payload(stringvazio),nrbytes(int),offset(int),user(int)
 	//lê nrbytes do arquivo path a partir da posição offset
 	if (strcmp(cmdstr[0], "RD-REQ") == 0)
 	{
@@ -363,8 +506,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			count++;
 		}
 		
-		if(count < 5){
-			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'tamanho do nome do arquivo', 'um espaco vazio' ,'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+		if(count < 6){
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'tamanho do nome do arquivo', 'um espaco vazio' ,'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler, e o usuário'\n", count);
 			
 			count=0;
 			while(cmdstr[count] != NULL){
@@ -374,11 +517,11 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			
 			return 0;
 		}
-		read_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]));
+		read_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), atoi(cmdstr[6]));
 	}
 	
 	
-	//WR-­-REQ,path(string),strlen(int),payload(string),nrbytes(int),offset(int)
+	//WR-­REQ,path(string),strlen(int),payload(string),nrbytes(int),offset(int),user(int),perms(char[2])
 	//escreve nrbytes do conteúdo de payload no arquivo path a partir da posição offset
 	else if (strcmp(cmdstr[0], "WR-REQ") == 0)
 	{
@@ -388,8 +531,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		
 		
-		if(count < 5){
-			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler.'\n", count);
+		if(count < 7){
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'quantidade de bytes a serem lidos' e 'a partir de qual byte deve comecar a ler. E usuário e permissões'\n", count);
 			
 			count=0;
 			while(cmdstr[count] != NULL){
@@ -399,9 +542,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			
 			return 0;
 		}
-		
-		
-		w = write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3], NULL);
+				
+		w = write_file(cmdstr[1], buf, atoi(cmdstr[4]), atoi(cmdstr[5]), cmdstr[3], atoi(cmdstr[6]), cmdstr[7]);
 		
 		//constrói reply
 		strcpy(buf,"");
