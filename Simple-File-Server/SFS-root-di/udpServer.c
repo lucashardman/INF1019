@@ -705,12 +705,20 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		remove_folder(str, TRUE, buf, cmdstr[3]);
 	}
 	
-	//DL­‐REQ,path(string),strlen(int)
+	//DL­‐REQ,path(string),strlen(int),user(int)
 	//mostra o nome dos arquivos no diretório path
 	
 	else if (strcmp(cmdstr[0], "DL-REQ") == 0)
 	{
 		printf("DL-REQ!\n");
+		
+		if((check_dir_permission(cmdstr[0],cmdstr[1], 'R')) <= 0)
+		{
+			printf("denied\n");
+			strcpy(buf, "DL-REP,denied");
+			return 0;
+		}
+		printf("allowed\n");
 		
 		ini = (int*) malloc(MAXFILES * sizeof(int));
 		fim = (int*) malloc(MAXFILES * sizeof(int));
