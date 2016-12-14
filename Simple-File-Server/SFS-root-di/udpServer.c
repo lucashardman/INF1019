@@ -218,7 +218,60 @@ int check_permission(char* path, int user, char desired_acess)
 		return -2;
 	}
 }
+int print_permission(char* path)
+{
+	int bytes_read, fd;
+	char tempBuf[MAXFILENAME];
+	int meta_size, i;
+	char **infos;
+	int n_infos;
+	
+	
 
+	if((fd = open(path, O_RDONLY)) > 0)
+	//arquivo existe
+	{
+		bytes_read = pread(fd, tempBuf, 4,0);
+		printf("bytes_read : %d\n", bytes_read);
+		i = 0;
+		while(tempBuf[i] == '0')
+		{
+			if(i >= 4)
+			{
+				printf("Meta-informação inconsistente. i: %d\n", i);
+				close(fd);
+				return -1;
+			}
+			i++;
+		}
+		printf("tempBuf: %s\n", tempBuf);
+		printf("tempBuf[i]: %s\n", &tempBuf[i]);
+		
+		meta_size = atoi(&tempBuf[i]);
+		printf("meta_size: %d\n", meta_size);
+		pread(fd, tempBuf, meta_size, 0);
+		close(fd);
+		infos = split_buff(tempBuf, &n_infos);
+		if(n_infos != 5 + 1)
+		{
+			printf("Meta-informação inconsistente. n:infos: %d\n", n_infos);
+			free_buf(n_infos, infos);
+			return -1;
+		}
+		
+		for(i=0; i<n_infos; i++){
+			printf("%s\n", infos);
+		}
+		
+		free_buf(n_infos, infos);
+				
+	}
+	else
+	//arquivo não existe
+	{
+		return -2;
+	}
+}
 //cria entrada em meta-info.txt. Cria meta-info.txt se ele não existe
 //path(string),strlen(int),owner(int),permissions(2char)
 int create_entry(char* path, int owner, char* permissions)
@@ -685,7 +738,25 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	
 	else if (strcmp(cmdstr[0], "FI-REQ") == 0)
 	{
+		count=0;
+		while(cmdstr[count] != NULL){
+			count++;
+		}
 		
+		
+		if(count < 3){
+			printf("ERRO. %d parametros. Digite  'comando', 'arquivo', 'tamanho da string do arquivo.'\n", count);
+			
+			count=0;
+			while(cmdstr[count] != NULL){
+				printf("%s\n", cmdstr[count]);
+				count++;
+			}
+			
+			return 0;
+		}
+		
+		print_permission(cmdstr[1]);
 	}
 	
 	//DC-­REQ,path(string),strlen(int), dirname(string),strlen(int),user(int),permission(char[2])
