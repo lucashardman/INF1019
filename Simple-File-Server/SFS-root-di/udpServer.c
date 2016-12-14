@@ -280,22 +280,41 @@ int check_dir_permission(char *path, int user, char permission)
 	
 }
 
+
 int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	int empty;
 	struct dirent *next_file;
-	char filePath[256];
+	char filePath[256], str[BUFSIZE];
 	char dot[256], dotdot[256];
 	DIR *folder;
 	DIR *home = opendir(".");
-	int found = FALSE;
+	int found = 0; // 0 se FALSE, -1 se TRUE
 	
+	strcpy(str,path);
+	
+	if(first == TRUE){
+		//str = full relative path
+		if(strcmp(str, " ") != 0)
+		{
+			strcpy(path, str);
+		
+			strcat(path, "/");
+		
+			strcat(path, dirname);
+		}
+		else
+		{
+			strcpy(path, dirname);
+		}
+	}
 	folder = opendir(path);
 
 	empty = rmdir(path);
+	
 	if(empty >= 0)
 	{
-		//escrever buf
+		sprintf(buf,"DR-REP,%s,%d",str, strlen(str));
 		return 0;
 	}
 
@@ -307,22 +326,13 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	//Este if serve para checar se a pasta path eh existente. Nao se entra neste if nas chamadas recursivas.
 	if(first == TRUE){
-
-		while((next_file = readdir(home)) != NULL){
-
-			sprintf(filePath, "%s/%s", path, next_file->d_name);
-
-			if(strcmp(dirname, next_file->d_name) == 0){
-				found = TRUE;
-				break;
-			}
-		}
-		closedir(home);
 		
-		
-		if(found == FALSE){
+		found = mkdir(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+		if(found == 0){
+			rmdir(path);
 			printf("ERRO. Pasta nao existente.\n");
-			strcpy(buf, "DR-REP: ERRO. Pasta nao existente.\n");
+			sprintf(buf,"RD-REP,%s,0",str);
 			return 1;
 		}
 	}
@@ -355,21 +365,21 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 		empty = rmdir(path);
 
 	}
+	
 	if(empty != 0){
 		printf("Erro ao remover o diretorio.\n");
-		strcpy(buf, "DR-REP: ERRO. Nao foi possivel remover o diretorio.\n");
 		return 2;
 	}
 
 	printf("Diretorio '%s'foi deletado com sucesso.\n", path);
 
 	if(first == TRUE){
-		strcpy(buf, "DR-REP: Diretorio '");
-		strcat(buf, path);
-		strcat(buf, "' foi removido com sucesso.\n");
+
+		sprintf(buf,"RD-REP,%s,%d",str, strlen(str));
 	}
 	return 0;
 }
+
 
 int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 
@@ -676,7 +686,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			count++;
 		}
 
-		if(count < 4){
+		if(count < 5){
 			printf("ERRO. %d parametros. Digite  'comando', 'endereco', 'tamanho da string do endereco', 'arquivo', 'tamanho da string do arquivo'.\n", count);
 			
 			count=0;
@@ -688,21 +698,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			return 0;
 		}
 
-		//str = full relative path
-		if(strcmp(cmdstr[1], " ") != 0)
-		{
-			strcpy(str, cmdstr[1]);
-			
-			strcat(str, "/");
-			
-			strcat(str, cmdstr[3]);
-		}
-		else
-		{
-			strcpy(str, cmdstr[3]);
-		}
 		//Falta fazer o buf retornar com o DR-REP certo
-		remove_folder(str, TRUE, buf, cmdstr[3]);
+		remove_folder(cmdstr[1], TRUE, buf, cmdstr[3]);
 	}
 	
 	//DL­‐REQ,path(string),strlen(int),user(int)
