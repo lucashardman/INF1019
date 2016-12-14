@@ -80,6 +80,40 @@ char** split_buff (char string[], int *n){
 	return buf;
 
 }
+
+char** split_buff_barra (char string[], int *n){
+
+	char str[BUFSIZE];
+	char *p, **ret ;
+	int n_spaces = 0, i;
+	char **buf = (char**) malloc(0 * sizeof(char*));
+
+	strcpy(str, string);
+	
+	p =  strtok (str, "/");
+
+	//Divisao da string np vetor
+	while (p != NULL) {
+		buf = realloc (buf, sizeof (char*) * (n_spaces+1));
+
+		if (buf == NULL){
+			printf("Erro. Falha na alocacao de memoria.\n");
+	    	exit (-1); 
+		}
+		
+		buf[n_spaces] = (char*) malloc((strlen(p)+1) * sizeof(char));
+		strcpy(buf[n_spaces], p);
+		
+		n_spaces++;
+		
+		p = strtok (NULL, "/");
+	}
+	
+	*n = n_spaces;
+	return buf;
+
+}
+
 //função que libera array de string alocado por split_buff()
 void free_buf(int n,  char **buf)
 {
@@ -219,6 +253,33 @@ int create_entry(char* path, int owner, char* permissions)
 	return w;
 }
 
+//recebe a path de qualquer coisa e a permissão desejada de retorna >0 se a permissão é concedida
+int check_dir_permission(char *path, int user, char permission)
+{
+	int i,n,p;
+	char pathdir[50];
+	char **div = split_buff_barra(path,&n);
+	strcpy(pathdir, "");
+	for(i = 0; i < n-1; i++)
+	{
+		strcat(pathdir,div[i]);
+	}
+	strcat(pathdir,"/dir-info.txt");
+	printf("%s\n", pathdir);
+	p = check_permission(pathdir,user, permission);
+	if(p > 0 || p == -2)
+	{
+		//permissão concedida
+		return 1;
+	}
+	else
+	{
+		printf("permissão negada\n");
+		return -1;
+	}
+	
+}
+
 int remove_folder (char *path, int first, char *buf, char *dirname){
 
 	int empty;
@@ -312,9 +373,17 @@ int remove_folder (char *path, int first, char *buf, char *dirname){
 
 int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 
-	int fd, mOffset;
+	int fd, mOffset, rdir;
 	ssize_t bytes_read;
 	char tempBuf[BUFSIZE];
+	
+	//checa permissão de leitura no diretório
+	rdir = check_dir_permission(path, user, 'R');
+	if(rdir <= 0)
+	{
+		printf("Permissão negada no diretório.\n");
+		return -1;
+	}
 	
 	//checa permissão de leitura. Se concedida, o retorno é > 0 e igual a valor ao offset da meta informação
 	mOffset = check_permission(path, user, 'R');
@@ -369,7 +438,7 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, in
 	int fd;
 	ssize_t bytes_read;
 	int file_size;
-	int w;
+	int w, rdir;
 	char tempBuf[BUFSIZE];
 	//offset equivalente a meta-informação dentro do arquivo
 	int mOffset;
@@ -381,7 +450,15 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, in
 		return -2;
 	}
 	
-	//checa permissão de escrita. Se concedida, o retorno é > 0 e igual a valor ao offset da meta informação
+	//checa permissão de escrita no diretório
+	rdir = check_dir_permission(path, user, 'W');
+	if(rdir <= 0)
+	{
+		printf("Permissão negada no diretório.\n");
+		return -1;
+	}
+		
+	//checa permissão de escrita no arquivo. Se concedida, o retorno é > 0 e igual a valor ao offset da meta informação
 	mOffset = check_permission(path, user, 'W');
 	if(mOffset > 0)
 	{
@@ -449,13 +526,18 @@ int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, in
 }
 
 //cria novo diretorio se ele nao existe
-int create_dir(char *path, char *buf)
+int create_dir(char *path, char *buf, int user, char *perms)
 {
 	struct stat st;
+	char npath[50];
 		
 	if (stat(path, &st) == -1)
 	{
 		mkdir(path, 0700);
+		strcpy(npath,path);
+		strcat(npath,"/dir-info.txt");
+		create_entry(npath, user, perms);
+		
 	
 		//buf  = DC-­‐REP,path(string),strlen(int)       
 		sprintf(buf, "DC-REP, %s, %d", path, strlen(path));
@@ -558,7 +640,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 	}
 	
-	//DC-­REQ,path(string),strlen(int), dirname(string),strlen(int)
+	//DC-­REQ,path(string),strlen(int), dirname(string),strlen(int),user(int),permission(char[2])
 	//cria um novo subdiretório dirname em path
 	else if (strcmp(cmdstr[0], "DC-REQ") == 0)
 	{
@@ -574,14 +656,13 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		}
 		else
 		{
-			printf("here\n");
 			strcpy(str, cmdstr[3]);
 		}		
 		
 		printf("str: %s\n", str);
 		
 		//cria novo diretório em path se diretório já não existe
-		create_dir(str, buf);
+		create_dir(str, buf, atoi(cmdstr[5]),cmdstr[6]);
 		
 		
 	}
