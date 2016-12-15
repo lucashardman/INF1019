@@ -21,7 +21,7 @@
 //tamanho base da meta-informação em um arquivo/diretório padrão. É usada para armazenar um inteiro por escrito, que por sua vez informa qual o tamanho total da meta informação.
 #define min_meta 4
 
-#define BUFSIZE 1024
+#define BUFSIZE 8192
 
 #define TRUE 1
 #define FALSE 0
@@ -318,7 +318,7 @@ int check_dir_permission(char *path, int user, char permission)
 	{
 		strcat(pathdir,div[i]);
 	}
-	strcat(pathdir,"/dir-info.txt");
+	strcat(pathdir,"dir-info.txt");
 	printf("pathdir: %s\n", pathdir);
 	p = check_permission(pathdir,user, permission);
 	if(p > 0)
@@ -329,7 +329,6 @@ int check_dir_permission(char *path, int user, char permission)
 	}
 	else
 	{
-		printf("permissão negada\n");
 		free_buf(n,div);
 		return -1;
 	}
