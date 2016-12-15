@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in serveraddr;
     struct hostent *server;
     char *hostname;
-    char buf[BUFSIZE];
+    char buf[BUFSIZE], tempBuf[BUFSIZE];
 
     /* check command line arguments */
     if (argc != 3) {
@@ -63,16 +63,19 @@ int main(int argc, char **argv) {
 
     /* send the message to the server */
     serverlen = sizeof(serveraddr);
-    n = sendto(sockfd, buf, strlen(buf), 0, &serveraddr, serverlen);
+    n = sendto(sockfd, buf, strlen(buf), 0, (const struct sockaddr *) &serveraddr, serverlen);
     if (n < 0) 
       error("ERROR in sendto");
 
     /* print the server's reply */
     strcpy(buf,"");
-    n = recvfrom(sockfd, buf, BUFSIZE, 0, &serveraddr, &serverlen);
+
+    n = recvfrom(sockfd, tempBuf, BUFSIZE, 0, (struct sockaddr * restrict) &serveraddr, (socklen_t * restrict) &serverlen);
+
+    strcpy(buf, tempBuf);
 
     if (n < 0) 
-      error("ERROR in recvfrom");
-    printf("Echo from server: %s", buf);
+        error("ERROR in recvfrom");
+    printf("Echo from server: %s\n", buf);
     return 0;
 }

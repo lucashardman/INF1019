@@ -388,6 +388,7 @@ int remove_folder (char *path, int first, char *buf, char *dirname, int user){
 	}
 	
 	ret = check_dir_permission_for_dirs(path, user, 'W');
+
 	if(ret <= 0)
 	{
 		printf("denied\n");
@@ -782,7 +783,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 	//remove o sub-diretório dirname de path
 	else if (strcmp(cmdstr[0], "DR-REQ") == 0)
 	{
-
+		
 		count=0;
 		while(cmdstr[count] != NULL){
 			count++;
@@ -800,7 +801,6 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			return 0;
 		}
 
-		//Falta fazer o buf retornar com o DR-REP certo
 		remove_folder(cmdstr[1], TRUE, buf, cmdstr[3],atoi(cmdstr[5]));
 	}
 	
