@@ -51,8 +51,8 @@ void error(char *msg) {
 char** split_buff (char string[], int *n){
 
 	char str[BUFSIZE];
-	char *p, **ret ;
-	int n_spaces = 0, i;
+	char *p;
+	int n_spaces = 0;
 	char **buf = (char**) malloc(0 * sizeof(char*));
 
 	strcpy(str, string);
@@ -84,8 +84,8 @@ char** split_buff (char string[], int *n){
 char** split_buff_barra (char string[], int *n){
 
 	char str[BUFSIZE];
-	char *p, **ret ;
-	int n_spaces = 0, i;
+	char *p;
+	int n_spaces = 0;
 	char **buf = (char**) malloc(0 * sizeof(char*));
 
 	strcpy(str, string);
@@ -218,8 +218,8 @@ int check_permission(char* path, int user, char desired_acess)
 		return -2;
 	}
 }
-int print_permission(char* path)
-{
+int print_permission(char* path, char *buf){
+
 	int bytes_read, fd;
 	char tempBuf[MAXFILENAME];
 	int meta_size, i;
@@ -244,9 +244,7 @@ int print_permission(char* path)
 			}
 			i++;
 		}
-		printf("tempBuf: %s\n", tempBuf);
-		printf("tempBuf[i]: %s\n", &tempBuf[i]);
-		
+
 		meta_size = atoi(&tempBuf[i]);
 		printf("meta_size: %d\n", meta_size);
 		pread(fd, tempBuf, meta_size, 0);
@@ -258,19 +256,19 @@ int print_permission(char* path)
 			free_buf(n_infos, infos);
 			return -1;
 		}
-		
-		for(i=0; i<n_infos; i++){
-			printf("%s\n", infos);
-		}
-		
+
+		sprintf(buf,"FI-REP,%s,%d,%s,'%s',%s",path, (int) strlen(path), infos[3], infos[4],infos[2]);
+
 		free_buf(n_infos, infos);
 				
 	}
 	else
 	//arquivo não existe
 	{
+		sprintf(buf,"FI-REP,%s,%d,arquivo inexistente",path, (int) strlen(path));
 		return -2;
 	}
+	return 0;
 }
 //cria entrada em meta-info.txt. Cria meta-info.txt se ele não existe
 //path(string),strlen(int),owner(int),permissions(2char)
@@ -288,7 +286,7 @@ int create_entry(char* path, int owner, char* permissions)
 		w += write(fd, path, strlen(path));
 		//itoa(strlen(path),temp,10);
 		w += write(fd, comma, 1);
-		snprintf(temp, 20, "%d", strlen(path));
+		snprintf(temp, 20, "%d", (int) strlen(path));
 		w += write(fd, temp, strlen(temp));
 		w += write(fd, comma, 1);
 		//itoa(owner,temp,10);
@@ -340,7 +338,7 @@ int check_dir_permission(char *path, int user, char permission)
 
 int check_dir_permission_for_dirs(char *path, int user, char permission)
 {
-	int i,n,p;
+	int p;
 	char pathdir[50];
 		
 	strcpy(pathdir, path);	
@@ -368,7 +366,6 @@ int remove_folder (char *path, int first, char *buf, char *dirname, int user){
 	char filePath[256], str[BUFSIZE];
 	char dot[256], dotdot[256];
 	DIR *folder;
-	DIR *home = opendir(".");
 	int found = 0; // 0 se FALSE, -1 se TRUE
 	int ret;
 		
@@ -405,7 +402,7 @@ int remove_folder (char *path, int first, char *buf, char *dirname, int user){
 	
 	if(empty >= 0)
 	{
-		sprintf(buf,"DR-REP,%s,%d",str, strlen(str));
+		sprintf(buf,"DR-REP,%s,%d",str, (int) strlen(str));
 		return 0;
 	}
 
@@ -466,7 +463,7 @@ int remove_folder (char *path, int first, char *buf, char *dirname, int user){
 
 	if(first == TRUE){
 
-		sprintf(buf,"RD-REP,%s,%d",str, strlen(str));
+		sprintf(buf,"RD-REP,%s,%d",str, (int) strlen(str));
 	}
 	return 0;
 }
@@ -507,7 +504,7 @@ int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 
 	if((fd = open(path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1){
 		printf("Este arquivo nao existe.\n");
-		sprintf(buf,"RD-REP,%s,%d, ,0,%d",path,strlen(path),offset);
+		sprintf(buf,"RD-REP,%s,%d, ,0,%d", path, (int) strlen(path), offset);
 		return 0;
 	}
 	strcpy(buf, "");
@@ -516,20 +513,20 @@ int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 
 	if(bytes_read == 0){
 
-		sprintf(buf,"RD-REP,%s,%d, ,0,%d",path,strlen(path),offset);
+		sprintf(buf,"RD-REP,%s,%d, ,0,%d",path,(int) strlen(path),offset);
 		close(fd);
 		return 0;
 	}
 	else if(bytes_read == nrbytes){
 		tempBuf[bytes_read+1] = '\0';
-		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,strlen(path),tempBuf,bytes_read,offset);
+		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,(int) strlen(path),tempBuf,(int) bytes_read,offset);
 	}
 	else if(bytes_read < nrbytes){
 		tempBuf[bytes_read] = '\0';
-		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,strlen(path),tempBuf,bytes_read,offset);
+		sprintf(buf,"RD-REP,%s,%d,%s,%d,%d",path,(int) strlen(path),tempBuf,(int) bytes_read,offset);
 	}
 	
-	printf("Numero de bytes: %d\n%s\n", bytes_read, buf);
+	printf("Numero de bytes: %d\n%s\n", (int) bytes_read, buf);
 	close(fd);
 	return 0;
 }
@@ -537,10 +534,7 @@ int read_file(char path[], char *buf, int nrbytes, int offset, int user){
 int write_file(char *path, char *buf, int nrbytes, int offset, char* payload, int user, char* perm)
 {
 	int fd;
-	ssize_t bytes_read;
-	int file_size;
 	int w, rdir;
-	char tempBuf[BUFSIZE];
 	//offset equivalente a meta-informação dentro do arquivo
 	int mOffset;
 	
@@ -641,7 +635,7 @@ int create_dir(char *path, char *buf, int user, char *perms)
 		
 	
 		//buf  = DC-­‐REP,path(string),strlen(int)       
-		sprintf(buf, "DC-REP, %s, %d", path, strlen(path));
+		sprintf(buf, "DC-REP, %s, %d", path, (int) strlen(path));
 	}
 	else
 	{
@@ -662,7 +656,6 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
     char **cmdstr;
     char str[BUFSIZE];
     struct direct **files;
-    struct stat st;
     //arrays usados para inicios e fins de nomes de arquivos(DL­‐REQ)
     int *ini, *fim, x;
     
@@ -734,8 +727,8 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 		
 	}
 
-	
-	
+	//FI-­REQ,path(string),strlen(int),owner(string),permissions(2 char),filelenght(int)
+	//lista os meta-dados dos arquivos
 	else if (strcmp(cmdstr[0], "FI-REQ") == 0)
 	{
 		count=0;
@@ -756,7 +749,7 @@ int parse_buff (char *buf, int n, int *cmd, char *name) {
 			return 0;
 		}
 		
-		print_permission(cmdstr[1]);
+		print_permission(cmdstr[1],buf);
 	}
 	
 	//DC-­REQ,path(string),strlen(int), dirname(string),strlen(int),user(int),permission(char[2])
@@ -958,14 +951,10 @@ int main(int argc, char **argv) {
 	     * gethostbyaddr: determine who sent the datagram
 	     */
 	     
-	    printf("teste feedback:%s\n", buf);
+	    printf("Feedback: %s\n", buf);
 	    
-	    printf("Olha eu aqui!\n");
-	    //dá segfault aqui
 	    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
 		
-		printf("Olha eu ali!\n");
-	    
 	    if (hostp == NULL)
 	    	error("ERROR on gethostbyaddr");
 	    
@@ -977,8 +966,7 @@ int main(int argc, char **argv) {
 	    }
 	      
 	    printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
-		printf("aqui!! Oi!!\n");
-		printf("buf: %s\n", buf);
+
 	    printf("server received %ld/%d bytes: %s\n", strlen(buf), n, buf);
 	    
 	    /* 
