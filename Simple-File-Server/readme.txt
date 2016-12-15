@@ -1,6 +1,6 @@
 Alunos:
 Andre Mazal Krauss - 1410386
-Lucas Hardman Gomes Campos Francao - 1113567
+Lucas Hardman Gomes Campos Franca - 1113567
 
 Estrutura:
 
