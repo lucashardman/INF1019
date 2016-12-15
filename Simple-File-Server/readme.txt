@@ -25,6 +25,9 @@ Terminal 1:
 Terminal 2:
 ./client localhost 3999
 
+Comunicação Cliente-Servidor: o seguinte protocolo de comunicação foi implementado, de acordo com o enunciado do trabalho(Simple-File-Server.pdf).
+Pares requisição(REQ) - reply(REP)
+
 DL­‐REQ,path(string),strlen(int),user(int)
 DR‐REQ,path(string),strlen(int),dirname(string),strlen(int),user(int)
 DC-­REQ,path(string),strlen(int), dirname(string),strlen(int),user(int),permission(char[2])
