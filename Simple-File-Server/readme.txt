@@ -10,7 +10,7 @@ SFS-root-di
 	arquivos
 	pastas
 
-Existem dois processos, o server (udpServer.c) e o client (udpClient.c).....................
+Existem dois processos, o server (udpServer.c) que fica na pasta SFS-root-di e o client (udpClient.c) que pode ficar em qualquer outra pasta. O client faz requisicoes para o servidor (para poder ler e escrever arquivoes, por exemplo) através de comandos REQ, e o servidor executa a acao e responde o resultado para o cliente através de um comando REP.
 
 
 Compilacao:
