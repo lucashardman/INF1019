@@ -7,4 +7,4 @@ Pontifica Universidade Catolica do Rio de Janeiro
 2016.1
 
 #### Descricao:
-Trabalhos e laboratorios da materia de Sistemas de Computacao.
+Trabalhos e laboratórios da materia de Sistemas de Computacao.
